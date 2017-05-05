@@ -1,4 +1,13 @@
 <div id="todo-app">
-    <input class="add-todo" autofocus placeholder="Enter a new task" v-model="newTodo" @keyup.enter="addTodo">
-    <section class="todos"></section>
+    <input class="add-todo" autofocus placeholder="Task title" v-model="newTodo" @keyup.enter="addTodo">
+    <input class="add-todo" autofocus placeholder="Enter a new task" v-model="newDescription" @keyup.enter="addTodo">
+    <section class="todos">
+        <ul class="todoList">
+            <li v-for="todo in todos">
+                <input type="checkbox" v-model="toggleCompleted">
+                <h1 v-if="!todo.completed">{{ todo.title }}</h1>
+                <div class="todoDescription">{{todo.description}}</div>
+            </li>
+        </ul>
+    </section>
 </div>
