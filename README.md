@@ -11,13 +11,15 @@ git clone https://github.com/Faultless/todo-challenge.git
 ```
 
 to get a copy of the repository locally.
-Then simply **execute the following command** at the root of the application:
+Then simply **execute the following commands** at the **root** of the application:
 
 ```
+npm install
 npm start
 ```
+> Note that the first command will take a while to execute especially on slow connections since the project has a lot of dependencies.
 
-This command will **start our express server**. You can then **navigate to** `localhost:3000/` in order to test the application.
+The second command will **start our express server**. You can then **navigate to** `localhost:3000/` in order to test the application.
 
 ### Prerequisites
 
@@ -27,13 +29,7 @@ The database used is hosted on [MLab](https://mlab.com) and requires no further 
 
 ### Installing
 
-In order to **setup a development environment** for this project, simply run the following command after cloning the repo:
-
-```
-npm install
-```
-
-> Note that this will take a while especially on slow connections since the project has a lot of dependencies.
+In order to **setup a development environment** for this project, do the following.
 
 This project uses [webpack](https://webpack.js.org/guides/installation/) in order to **bundle all Scripts as well as Styles and Assets automatically**.
 
