@@ -29,8 +29,17 @@ module.exports = {
             },
             {
                 test: /\.vue$/,
-                exclude: /node_modules/,
-                loader: 'vue-loader'
+                loader: 'vue-loader',
+                options: {
+                    loaders: {
+                        scss: 'vue-style-loader!css-loader!sass-loader?' + JSON.stringify({
+                            includePaths: [
+                                path.resolve(__dirname, 'node_modules/@material'),
+                            ]
+                        }), // <style lang="scss">
+                        sass: 'vue-style-loader!css-loader!sass-loader?indentedSyntax' // <style lang="sass">
+                    }
+                }
             },
             {
                 test: /\.(jpg|png|svg)$/,

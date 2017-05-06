@@ -1,12 +1,22 @@
 <div id="todo-app">
-    <input class="add-todo" autofocus placeholder="Task title" v-model="newTodo" @keyup.enter="addTodo">
-    <input class="add-todo" autofocus placeholder="Enter a new task" v-model="newDescription" @keyup.enter="addTodo">
-    <section class="todos">
-        <ul class="todoList">
-            <li v-for="todo in todos">
-                <input type="checkbox" v-model="toggleCompleted">
-                <h1 v-if="!todo.completed">{{ todo.title }}</h1>
-                <div class="todoDescription">{{todo.description}}</div>
+    <section class="searchArea mdc-textfield">
+        <input id="addtodo-textfield" class="add-todo mdc-textfield__input" placeholder="Enter a Todo" autofocus v-model="inputString" @keyup.enter="addTodo">
+    </section>
+    <section class="todos mdc-grid-list">
+        <ul class="todoList mdc-grid-list__tiles">
+            <li v-for="todo in todos" class="mdc-card mdc-grid-tile" :class="{ completed: todo.completed }">
+                <section class="mdc-card__primary mdc-grid-tile__primary">
+                    <h1 class="mdc-card__title">{{ todo.title }}</h1>
+                    <div class="mdc-card__subtitle todoDescription mdc-card__supporting-text">{{todo.description}}</div>
+                </section>
+                <section class="mdc-grid-tile__secondary">
+                    <div class="mdc-grid-tile__secondary-content mdc-checkbox">
+                        <input @click="updateTodo(todo)" id="completed-checkbox" type="checkbox" class="mdc-checkbox__native-control" v-model="todo.completed">
+                        <label v-if="todo.completed" for="completed-checkbox">Completed</label>
+                        <label v-if="!todo.completed" for="completed-checkbox">In Progress</label>
+                    </div>
+                    <button @click="removeTodo(todo)" class="mdc-grid-tile__secondary-content mdc-button">Delete</button>
+                </section>
             </li>
         </ul>
     </section>

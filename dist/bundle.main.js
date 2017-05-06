@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 0);
+/******/ 	return __webpack_require__(__webpack_require__.s = 38);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -71,608 +71,946 @@
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+/* WEBPACK VAR INJECTION */(function(Buffer) {
 
+var bind = __webpack_require__(9);
 
-var _vue = __webpack_require__(19);
+/*global toString:true*/
 
-var _vue2 = _interopRequireDefault(_vue);
+// utils is a library of generic helper functions non-specific to axios
 
-var _app = __webpack_require__(2);
+var toString = Object.prototype.toString;
 
-var _app2 = _interopRequireDefault(_app);
+/**
+ * Determine if a value is an Array
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is an Array, otherwise false
+ */
+function isArray(val) {
+  return toString.call(val) === '[object Array]';
+}
 
-__webpack_require__(13);
+/**
+ * Determine if a value is a Node Buffer
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a Node Buffer, otherwise false
+ */
+function isBuffer(val) {
+  return ((typeof Buffer !== 'undefined') && (Buffer.isBuffer) && (Buffer.isBuffer(val)));
+}
 
-__webpack_require__(14);
+/**
+ * Determine if a value is an ArrayBuffer
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is an ArrayBuffer, otherwise false
+ */
+function isArrayBuffer(val) {
+  return toString.call(val) === '[object ArrayBuffer]';
+}
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+/**
+ * Determine if a value is a FormData
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is an FormData, otherwise false
+ */
+function isFormData(val) {
+  return (typeof FormData !== 'undefined') && (val instanceof FormData);
+}
 
-new _vue2.default({
-    el: '.todo',
-    components: { App: _app2.default }
+/**
+ * Determine if a value is a view on an ArrayBuffer
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a view on an ArrayBuffer, otherwise false
+ */
+function isArrayBufferView(val) {
+  var result;
+  if ((typeof ArrayBuffer !== 'undefined') && (ArrayBuffer.isView)) {
+    result = ArrayBuffer.isView(val);
+  } else {
+    result = (val) && (val.buffer) && (val.buffer instanceof ArrayBuffer);
+  }
+  return result;
+}
+
+/**
+ * Determine if a value is a String
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a String, otherwise false
+ */
+function isString(val) {
+  return typeof val === 'string';
+}
+
+/**
+ * Determine if a value is a Number
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a Number, otherwise false
+ */
+function isNumber(val) {
+  return typeof val === 'number';
+}
+
+/**
+ * Determine if a value is undefined
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if the value is undefined, otherwise false
+ */
+function isUndefined(val) {
+  return typeof val === 'undefined';
+}
+
+/**
+ * Determine if a value is an Object
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is an Object, otherwise false
+ */
+function isObject(val) {
+  return val !== null && typeof val === 'object';
+}
+
+/**
+ * Determine if a value is a Date
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a Date, otherwise false
+ */
+function isDate(val) {
+  return toString.call(val) === '[object Date]';
+}
+
+/**
+ * Determine if a value is a File
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a File, otherwise false
+ */
+function isFile(val) {
+  return toString.call(val) === '[object File]';
+}
+
+/**
+ * Determine if a value is a Blob
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a Blob, otherwise false
+ */
+function isBlob(val) {
+  return toString.call(val) === '[object Blob]';
+}
+
+/**
+ * Determine if a value is a Function
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a Function, otherwise false
+ */
+function isFunction(val) {
+  return toString.call(val) === '[object Function]';
+}
+
+/**
+ * Determine if a value is a Stream
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a Stream, otherwise false
+ */
+function isStream(val) {
+  return isObject(val) && isFunction(val.pipe);
+}
+
+/**
+ * Determine if a value is a URLSearchParams object
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a URLSearchParams object, otherwise false
+ */
+function isURLSearchParams(val) {
+  return typeof URLSearchParams !== 'undefined' && val instanceof URLSearchParams;
+}
+
+/**
+ * Trim excess whitespace off the beginning and end of a string
+ *
+ * @param {String} str The String to trim
+ * @returns {String} The String freed of excess whitespace
+ */
+function trim(str) {
+  return str.replace(/^\s*/, '').replace(/\s*$/, '');
+}
+
+/**
+ * Determine if we're running in a standard browser environment
+ *
+ * This allows axios to run in a web worker, and react-native.
+ * Both environments support XMLHttpRequest, but not fully standard globals.
+ *
+ * web workers:
+ *  typeof window -> undefined
+ *  typeof document -> undefined
+ *
+ * react-native:
+ *  navigator.product -> 'ReactNative'
+ */
+function isStandardBrowserEnv() {
+  if (typeof navigator !== 'undefined' && navigator.product === 'ReactNative') {
+    return false;
+  }
+  return (
+    typeof window !== 'undefined' &&
+    typeof document !== 'undefined'
+  );
+}
+
+/**
+ * Iterate over an Array or an Object invoking a function for each item.
+ *
+ * If `obj` is an Array callback will be called passing
+ * the value, index, and complete array for each item.
+ *
+ * If 'obj' is an Object callback will be called passing
+ * the value, key, and complete object for each property.
+ *
+ * @param {Object|Array} obj The object to iterate
+ * @param {Function} fn The callback to invoke for each item
+ */
+function forEach(obj, fn) {
+  // Don't bother if no value provided
+  if (obj === null || typeof obj === 'undefined') {
+    return;
+  }
+
+  // Force an array if not already something iterable
+  if (typeof obj !== 'object' && !isArray(obj)) {
+    /*eslint no-param-reassign:0*/
+    obj = [obj];
+  }
+
+  if (isArray(obj)) {
+    // Iterate over array values
+    for (var i = 0, l = obj.length; i < l; i++) {
+      fn.call(null, obj[i], i, obj);
+    }
+  } else {
+    // Iterate over object keys
+    for (var key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        fn.call(null, obj[key], key, obj);
+      }
+    }
+  }
+}
+
+/**
+ * Accepts varargs expecting each argument to be an object, then
+ * immutably merges the properties of each object and returns result.
+ *
+ * When multiple objects contain the same key the later object in
+ * the arguments list will take precedence.
+ *
+ * Example:
+ *
+ * ```js
+ * var result = merge({foo: 123}, {foo: 456});
+ * console.log(result.foo); // outputs 456
+ * ```
+ *
+ * @param {Object} obj1 Object to merge
+ * @returns {Object} Result of all merge properties
+ */
+function merge(/* obj1, obj2, obj3, ... */) {
+  var result = {};
+  function assignValue(val, key) {
+    if (typeof result[key] === 'object' && typeof val === 'object') {
+      result[key] = merge(result[key], val);
+    } else {
+      result[key] = val;
+    }
+  }
+
+  for (var i = 0, l = arguments.length; i < l; i++) {
+    forEach(arguments[i], assignValue);
+  }
+  return result;
+}
+
+/**
+ * Extends object a by mutably adding to it the properties of object b.
+ *
+ * @param {Object} a The object to be extended
+ * @param {Object} b The object to copy properties from
+ * @param {Object} thisArg The object to bind function to
+ * @return {Object} The resulting value of object a
+ */
+function extend(a, b, thisArg) {
+  forEach(b, function assignValue(val, key) {
+    if (thisArg && typeof val === 'function') {
+      a[key] = bind(val, thisArg);
+    } else {
+      a[key] = val;
+    }
+  });
+  return a;
+}
+
+module.exports = {
+  isArray: isArray,
+  isArrayBuffer: isArrayBuffer,
+  isBuffer: isBuffer,
+  isFormData: isFormData,
+  isArrayBufferView: isArrayBufferView,
+  isString: isString,
+  isNumber: isNumber,
+  isObject: isObject,
+  isUndefined: isUndefined,
+  isDate: isDate,
+  isFile: isFile,
+  isBlob: isBlob,
+  isFunction: isFunction,
+  isStream: isStream,
+  isURLSearchParams: isURLSearchParams,
+  isStandardBrowserEnv: isStandardBrowserEnv,
+  forEach: forEach,
+  merge: merge,
+  extend: extend,
+  trim: trim
+};
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(44).Buffer))
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// Thank's IE8 for his funny defineProperty
+module.exports = !__webpack_require__(11)(function(){
+  return Object.defineProperty({}, 'a', {get: function(){ return 7; }}).a != 7;
 });
 
 /***/ }),
-/* 1 */,
 /* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var disposed = false
-function injectStyle (ssrContext) {
-  if (disposed) return
-  __webpack_require__(9)
-}
-var Component = __webpack_require__(7)(
-  /* script */
-  __webpack_require__(3),
-  /* template */
-  __webpack_require__(8),
-  /* styles */
-  injectStyle,
-  /* scopeId */
-  null,
-  /* moduleIdentifier (server only) */
-  null
-)
-Component.options.__file = "C:\\Users\\skamel\\todo-challenge\\src\\app.vue"
-if (Component.esModule && Object.keys(Component.esModule).some(function (key) {return key !== "default" && key.substr(0, 2) !== "__"})) {console.error("named exports are not supported in *.vue files.")}
-if (Component.options.functional) {console.error("[vue-loader] app.vue: functional components are not supported with templates, they should use render functions.")}
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process) {
 
-/* hot reload */
-if (false) {(function () {
-  var hotAPI = require("vue-hot-reload-api")
-  hotAPI.install(require("vue"), false)
-  if (!hotAPI.compatible) return
-  module.hot.accept()
-  if (!module.hot.data) {
-    hotAPI.createRecord("data-v-18136991", Component.options)
-  } else {
-    hotAPI.reload("data-v-18136991", Component.options)
+var utils = __webpack_require__(0);
+var normalizeHeaderName = __webpack_require__(34);
+
+var DEFAULT_CONTENT_TYPE = {
+  'Content-Type': 'application/x-www-form-urlencoded'
+};
+
+function setContentTypeIfUnset(headers, value) {
+  if (!utils.isUndefined(headers) && utils.isUndefined(headers['Content-Type'])) {
+    headers['Content-Type'] = value;
   }
-  module.hot.dispose(function (data) {
-    disposed = true
-  })
-})()}
+}
 
-module.exports = Component.exports
+function getDefaultAdapter() {
+  var adapter;
+  if (typeof XMLHttpRequest !== 'undefined') {
+    // For browsers use XHR adapter
+    adapter = __webpack_require__(5);
+  } else if (typeof process !== 'undefined') {
+    // For node use HTTP adapter
+    adapter = __webpack_require__(5);
+  }
+  return adapter;
+}
 
+var defaults = {
+  adapter: getDefaultAdapter(),
+
+  transformRequest: [function transformRequest(data, headers) {
+    normalizeHeaderName(headers, 'Content-Type');
+    if (utils.isFormData(data) ||
+      utils.isArrayBuffer(data) ||
+      utils.isBuffer(data) ||
+      utils.isStream(data) ||
+      utils.isFile(data) ||
+      utils.isBlob(data)
+    ) {
+      return data;
+    }
+    if (utils.isArrayBufferView(data)) {
+      return data.buffer;
+    }
+    if (utils.isURLSearchParams(data)) {
+      setContentTypeIfUnset(headers, 'application/x-www-form-urlencoded;charset=utf-8');
+      return data.toString();
+    }
+    if (utils.isObject(data)) {
+      setContentTypeIfUnset(headers, 'application/json;charset=utf-8');
+      return JSON.stringify(data);
+    }
+    return data;
+  }],
+
+  transformResponse: [function transformResponse(data) {
+    /*eslint no-param-reassign:0*/
+    if (typeof data === 'string') {
+      try {
+        data = JSON.parse(data);
+      } catch (e) { /* Ignore */ }
+    }
+    return data;
+  }],
+
+  timeout: 0,
+
+  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfHeaderName: 'X-XSRF-TOKEN',
+
+  maxContentLength: -1,
+
+  validateStatus: function validateStatus(status) {
+    return status >= 200 && status < 300;
+  }
+};
+
+defaults.headers = {
+  common: {
+    'Accept': 'application/json, text/plain, */*'
+  }
+};
+
+utils.forEach(['delete', 'get', 'head'], function forEachMethodNoData(method) {
+  defaults.headers[method] = {};
+});
+
+utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
+  defaults.headers[method] = utils.merge(DEFAULT_CONTENT_TYPE);
+});
+
+module.exports = defaults;
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }),
 /* 3 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/***/ (function(module, exports) {
 
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony default export */ __webpack_exports__["default"] = ({
-  data() {
-    return {
-      newTodo: 'Hello from vue-loader!'
-    };
-  }
-});
+module.exports = function(it){
+  return typeof it === 'object' ? it !== null : typeof it === 'function';
+};
 
 /***/ }),
 /* 4 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, exports) {
 
-exports = module.exports = __webpack_require__(5)(undefined);
-// imports
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
 
 
-// module
-exports.push([module.i, "/*! normalize.css v6.0.0 | MIT License | github.com/necolas/normalize.css */\n/* Document\n   ========================================================================== */\n/**\n * 1. Correct the line height in all browsers.\n * 2. Prevent adjustments of font size after orientation changes in\n *    IE on Windows Phone and in iOS.\n */\nhtml {\n    line-height: 1.15;\n    /* 1 */\n    -ms-text-size-adjust: 100%;\n    /* 2 */\n    -webkit-text-size-adjust: 100%\n    /* 2 */\n}\n/* Sections\n   ========================================================================== */\n/**\n * Add the correct display in IE 9-.\n */\narticle, aside, footer, header, nav, section {\n    display: block\n}\n/**\n * Correct the font size and margin on `h1` elements within `section` and\n * `article` contexts in Chrome, Firefox, and Safari.\n */\nh1 {\n    font-size: 2em;\n    margin: 0.67em 0\n}\n/* Grouping content\n   ========================================================================== */\n/**\n * Add the correct display in IE 9-.\n * 1. Add the correct display in IE.\n */\nfigcaption, figure, main {\n    /* 1 */\n    display: block\n}\n/**\n * Add the correct margin in IE 8.\n */\nfigure {\n    margin: 1em 40px\n}\n/**\n * 1. Add the correct box sizing in Firefox.\n * 2. Show the overflow in Edge and IE.\n */\nhr {\n    box-sizing: content-box;\n    /* 1 */\n    height: 0;\n    /* 1 */\n    overflow: visible\n    /* 2 */\n}\n/**\n * 1. Correct the inheritance and scaling of font size in all browsers.\n * 2. Correct the odd `em` font sizing in all browsers.\n */\npre {\n    font-family: monospace, monospace;\n    /* 1 */\n    font-size: 1em\n    /* 2 */\n}\n/* Text-level semantics\n   ========================================================================== */\n/**\n * 1. Remove the gray background on active links in IE 10.\n * 2. Remove gaps in links underline in iOS 8+ and Safari 8+.\n */\na {\n    background-color: transparent;\n    /* 1 */\n    -webkit-text-decoration-skip: objects\n    /* 2 */\n}\n/**\n * 1. Remove the bottom border in Chrome 57- and Firefox 39-.\n * 2. Add the correct text decoration in Chrome, Edge, IE, Opera, and Safari.\n */\nabbr[title] {\n    border-bottom: none;\n    /* 1 */\n    text-decoration: underline;\n    /* 2 */\n    text-decoration: underline dotted\n    /* 2 */\n}\n/**\n * Prevent the duplicate application of `bolder` by the next rule in Safari 6.\n */\nb, strong {\n    font-weight: inherit\n}\n/**\n * Add the correct font weight in Chrome, Edge, and Safari.\n */\nb, strong {\n    font-weight: bolder\n}\n/**\n * 1. Correct the inheritance and scaling of font size in all browsers.\n * 2. Correct the odd `em` font sizing in all browsers.\n */\ncode, kbd, samp {\n    font-family: monospace, monospace;\n    /* 1 */\n    font-size: 1em\n    /* 2 */\n}\n/**\n * Add the correct font style in Android 4.3-.\n */\ndfn {\n    font-style: italic\n}\n/**\n * Add the correct background and color in IE 9-.\n */\nmark {\n    background-color: #ff0;\n    color: #000\n}\n/**\n * Add the correct font size in all browsers.\n */\nsmall {\n    font-size: 80%\n}\n/**\n * Prevent `sub` and `sup` elements from affecting the line height in\n * all browsers.\n */\nsub, sup {\n    font-size: 75%;\n    line-height: 0;\n    position: relative;\n    vertical-align: baseline\n}\nsub {\n    bottom: -0.25em\n}\nsup {\n    top: -0.5em\n}\n/* Embedded content\n   ========================================================================== */\n/**\n * Add the correct display in IE 9-.\n */\naudio, video {\n    display: inline-block\n}\n/**\n * Add the correct display in iOS 4-7.\n */\naudio:not([controls]) {\n    display: none;\n    height: 0\n}\n/**\n * Remove the border on images inside links in IE 10-.\n */\nimg {\n    border-style: none\n}\n/**\n * Hide the overflow in IE.\n */\nsvg:not(:root) {\n    overflow: hidden\n}\n/* Forms\n   ========================================================================== */\n/**\n * Remove the margin in Firefox and Safari.\n */\nbutton, input, optgroup, select, textarea {\n    margin: 0\n}\n/**\n * Show the overflow in IE.\n * 1. Show the overflow in Edge.\n */\nbutton, input {\n    /* 1 */\n    overflow: visible\n}\n/**\n * Remove the inheritance of text transform in Edge, Firefox, and IE.\n * 1. Remove the inheritance of text transform in Firefox.\n */\nbutton, select {\n    /* 1 */\n    text-transform: none\n}\n/**\n * 1. Prevent a WebKit bug where (2) destroys native `audio` and `video`\n *    controls in Android 4.\n * 2. Correct the inability to style clickable types in iOS and Safari.\n */\nbutton, html [type=\"button\"], [type=\"reset\"], [type=\"submit\"] {\n    -webkit-appearance: button\n    /* 2 */\n}\n/**\n * Remove the inner border and padding in Firefox.\n */\nbutton::-moz-focus-inner, [type=\"button\"]::-moz-focus-inner, [type=\"reset\"]::-moz-focus-inner, [type=\"submit\"]::-moz-focus-inner {\n    border-style: none;\n    padding: 0\n}\n/**\n * Restore the focus styles unset by the previous rule.\n */\nbutton:-moz-focusring, [type=\"button\"]:-moz-focusring, [type=\"reset\"]:-moz-focusring, [type=\"submit\"]:-moz-focusring {\n    outline: 1px dotted ButtonText\n}\n/**\n * 1. Correct the text wrapping in Edge and IE.\n * 2. Correct the color inheritance from `fieldset` elements in IE.\n * 3. Remove the padding so developers are not caught out when they zero out\n *    `fieldset` elements in all browsers.\n */\nlegend {\n    box-sizing: border-box;\n    /* 1 */\n    color: inherit;\n    /* 2 */\n    display: table;\n    /* 1 */\n    max-width: 100%;\n    /* 1 */\n    padding: 0;\n    /* 3 */\n    white-space: normal\n    /* 1 */\n}\n/**\n * 1. Add the correct display in IE 9-.\n * 2. Add the correct vertical alignment in Chrome, Firefox, and Opera.\n */\nprogress {\n    display: inline-block;\n    /* 1 */\n    vertical-align: baseline\n    /* 2 */\n}\n/**\n * Remove the default vertical scrollbar in IE.\n */\ntextarea {\n    overflow: auto\n}\n/**\n * 1. Add the correct box sizing in IE 10-.\n * 2. Remove the padding in IE 10-.\n */\n[type=\"checkbox\"], [type=\"radio\"] {\n    box-sizing: border-box;\n    /* 1 */\n    padding: 0\n    /* 2 */\n}\n/**\n * Correct the cursor style of increment and decrement buttons in Chrome.\n */\n[type=\"number\"]::-webkit-inner-spin-button, [type=\"number\"]::-webkit-outer-spin-button {\n    height: auto\n}\n/**\n * 1. Correct the odd appearance in Chrome and Safari.\n * 2. Correct the outline style in Safari.\n */\n[type=\"search\"] {\n    -webkit-appearance: textfield;\n    /* 1 */\n    outline-offset: -2px\n    /* 2 */\n}\n/**\n * Remove the inner padding and cancel buttons in Chrome and Safari on macOS.\n */\n[type=\"search\"]::-webkit-search-cancel-button, [type=\"search\"]::-webkit-search-decoration {\n    -webkit-appearance: none\n}\n/**\n * 1. Correct the inability to style clickable types in iOS and Safari.\n * 2. Change font properties to `inherit` in Safari.\n */\n::-webkit-file-upload-button {\n    -webkit-appearance: button;\n    /* 1 */\n    font: inherit\n    /* 2 */\n}\n/* Interactive\n   ========================================================================== */\n/*\n * Add the correct display in IE 9-.\n * 1. Add the correct display in Edge, IE, and Firefox.\n */\ndetails, menu {\n    display: block\n}\n/*\n * Add the correct display in all browsers.\n */\nsummary {\n    display: list-item\n}\n/* Scripting\n   ========================================================================== */\n/**\n * Add the correct display in IE 9-.\n */\ncanvas {\n    display: inline-block\n}\n/**\n * Add the correct display in IE.\n */\ntemplate {\n    display: none\n}\n/* Hidden\n   ========================================================================== */\n/**\n * Add the correct display in IE 10-.\n */\n[hidden] {\n    display: none\n}", ""]);
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
 
-// exports
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
 
 
 /***/ }),
 /* 5 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-/*
-	MIT License http://www.opensource.org/licenses/mit-license.php
-	Author Tobias Koppers @sokra
-*/
-// css base code, injected by the css-loader
-module.exports = function(useSourceMap) {
-	var list = [];
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process) {
 
-	// return the list of modules as css string
-	list.toString = function toString() {
-		return this.map(function (item) {
-			var content = cssWithMappingToString(item, useSourceMap);
-			if(item[2]) {
-				return "@media " + item[2] + "{" + content + "}";
-			} else {
-				return content;
-			}
-		}).join("");
-	};
+var utils = __webpack_require__(0);
+var settle = __webpack_require__(26);
+var buildURL = __webpack_require__(29);
+var parseHeaders = __webpack_require__(35);
+var isURLSameOrigin = __webpack_require__(33);
+var createError = __webpack_require__(8);
+var btoa = (typeof window !== 'undefined' && window.btoa && window.btoa.bind(window)) || __webpack_require__(28);
 
-	// import a list of modules into the list
-	list.i = function(modules, mediaQuery) {
-		if(typeof modules === "string")
-			modules = [[null, modules, ""]];
-		var alreadyImportedModules = {};
-		for(var i = 0; i < this.length; i++) {
-			var id = this[i][0];
-			if(typeof id === "number")
-				alreadyImportedModules[id] = true;
-		}
-		for(i = 0; i < modules.length; i++) {
-			var item = modules[i];
-			// skip already imported module
-			// this implementation is not 100% perfect for weird media query combinations
-			//  when a module is imported multiple times with different media queries.
-			//  I hope this will never occur (Hey this way we have smaller bundles)
-			if(typeof item[0] !== "number" || !alreadyImportedModules[item[0]]) {
-				if(mediaQuery && !item[2]) {
-					item[2] = mediaQuery;
-				} else if(mediaQuery) {
-					item[2] = "(" + item[2] + ") and (" + mediaQuery + ")";
-				}
-				list.push(item);
-			}
-		}
-	};
-	return list;
+module.exports = function xhrAdapter(config) {
+  return new Promise(function dispatchXhrRequest(resolve, reject) {
+    var requestData = config.data;
+    var requestHeaders = config.headers;
+
+    if (utils.isFormData(requestData)) {
+      delete requestHeaders['Content-Type']; // Let the browser set it
+    }
+
+    var request = new XMLHttpRequest();
+    var loadEvent = 'onreadystatechange';
+    var xDomain = false;
+
+    // For IE 8/9 CORS support
+    // Only supports POST and GET calls and doesn't returns the response headers.
+    // DON'T do this for testing b/c XMLHttpRequest is mocked, not XDomainRequest.
+    if (process.env.NODE_ENV !== 'test' &&
+        typeof window !== 'undefined' &&
+        window.XDomainRequest && !('withCredentials' in request) &&
+        !isURLSameOrigin(config.url)) {
+      request = new window.XDomainRequest();
+      loadEvent = 'onload';
+      xDomain = true;
+      request.onprogress = function handleProgress() {};
+      request.ontimeout = function handleTimeout() {};
+    }
+
+    // HTTP basic authentication
+    if (config.auth) {
+      var username = config.auth.username || '';
+      var password = config.auth.password || '';
+      requestHeaders.Authorization = 'Basic ' + btoa(username + ':' + password);
+    }
+
+    request.open(config.method.toUpperCase(), buildURL(config.url, config.params, config.paramsSerializer), true);
+
+    // Set the request timeout in MS
+    request.timeout = config.timeout;
+
+    // Listen for ready state
+    request[loadEvent] = function handleLoad() {
+      if (!request || (request.readyState !== 4 && !xDomain)) {
+        return;
+      }
+
+      // The request errored out and we didn't get a response, this will be
+      // handled by onerror instead
+      // With one exception: request that using file: protocol, most browsers
+      // will return status as 0 even though it's a successful request
+      if (request.status === 0 && !(request.responseURL && request.responseURL.indexOf('file:') === 0)) {
+        return;
+      }
+
+      // Prepare the response
+      var responseHeaders = 'getAllResponseHeaders' in request ? parseHeaders(request.getAllResponseHeaders()) : null;
+      var responseData = !config.responseType || config.responseType === 'text' ? request.responseText : request.response;
+      var response = {
+        data: responseData,
+        // IE sends 1223 instead of 204 (https://github.com/mzabriskie/axios/issues/201)
+        status: request.status === 1223 ? 204 : request.status,
+        statusText: request.status === 1223 ? 'No Content' : request.statusText,
+        headers: responseHeaders,
+        config: config,
+        request: request
+      };
+
+      settle(resolve, reject, response);
+
+      // Clean up request
+      request = null;
+    };
+
+    // Handle low level network errors
+    request.onerror = function handleError() {
+      // Real errors are hidden from us by the browser
+      // onerror should only fire if it's a network error
+      reject(createError('Network Error', config));
+
+      // Clean up request
+      request = null;
+    };
+
+    // Handle timeout
+    request.ontimeout = function handleTimeout() {
+      reject(createError('timeout of ' + config.timeout + 'ms exceeded', config, 'ECONNABORTED'));
+
+      // Clean up request
+      request = null;
+    };
+
+    // Add xsrf header
+    // This is only done if running in a standard browser environment.
+    // Specifically not if we're in a web worker, or react-native.
+    if (utils.isStandardBrowserEnv()) {
+      var cookies = __webpack_require__(31);
+
+      // Add xsrf header
+      var xsrfValue = (config.withCredentials || isURLSameOrigin(config.url)) && config.xsrfCookieName ?
+          cookies.read(config.xsrfCookieName) :
+          undefined;
+
+      if (xsrfValue) {
+        requestHeaders[config.xsrfHeaderName] = xsrfValue;
+      }
+    }
+
+    // Add headers to the request
+    if ('setRequestHeader' in request) {
+      utils.forEach(requestHeaders, function setRequestHeader(val, key) {
+        if (typeof requestData === 'undefined' && key.toLowerCase() === 'content-type') {
+          // Remove Content-Type if data is undefined
+          delete requestHeaders[key];
+        } else {
+          // Otherwise add header to the request
+          request.setRequestHeader(key, val);
+        }
+      });
+    }
+
+    // Add withCredentials to request if needed
+    if (config.withCredentials) {
+      request.withCredentials = true;
+    }
+
+    // Add responseType to request if needed
+    if (config.responseType) {
+      try {
+        request.responseType = config.responseType;
+      } catch (e) {
+        // Expected DOMException thrown by browsers not compatible XMLHttpRequest Level 2.
+        // But, this can be suppressed for 'json' type as it can be parsed by default 'transformResponse' function.
+        if (config.responseType !== 'json') {
+          throw e;
+        }
+      }
+    }
+
+    // Handle progress if needed
+    if (typeof config.onDownloadProgress === 'function') {
+      request.addEventListener('progress', config.onDownloadProgress);
+    }
+
+    // Not all browsers support upload events
+    if (typeof config.onUploadProgress === 'function' && request.upload) {
+      request.upload.addEventListener('progress', config.onUploadProgress);
+    }
+
+    if (config.cancelToken) {
+      // Handle cancellation
+      config.cancelToken.promise.then(function onCanceled(cancel) {
+        if (!request) {
+          return;
+        }
+
+        request.abort();
+        reject(cancel);
+        // Clean up request
+        request = null;
+      });
+    }
+
+    if (requestData === undefined) {
+      requestData = null;
+    }
+
+    // Send the request
+    request.send(requestData);
+  });
 };
 
-function cssWithMappingToString(item, useSourceMap) {
-	var content = item[1] || '';
-	var cssMapping = item[3];
-	if (!cssMapping) {
-		return content;
-	}
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
-	if (useSourceMap && typeof btoa === 'function') {
-		var sourceMapping = toComment(cssMapping);
-		var sourceURLs = cssMapping.sources.map(function (source) {
-			return '/*# sourceURL=' + cssMapping.sourceRoot + source + ' */'
-		});
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
 
-		return [content].concat(sourceURLs).concat([sourceMapping]).join('\n');
-	}
+"use strict";
 
-	return [content].join('\n');
+
+/**
+ * A `Cancel` is an object that is thrown when an operation is canceled.
+ *
+ * @class
+ * @param {string=} message The message.
+ */
+function Cancel(message) {
+  this.message = message;
 }
 
-// Adapted from convert-source-map (MIT)
-function toComment(sourceMap) {
-	// eslint-disable-next-line no-undef
-	var base64 = btoa(unescape(encodeURIComponent(JSON.stringify(sourceMap))));
-	var data = 'sourceMappingURL=data:application/json;charset=utf-8;base64,' + base64;
+Cancel.prototype.toString = function toString() {
+  return 'Cancel' + (this.message ? ': ' + this.message : '');
+};
 
-	return '/*# ' + data + ' */';
-}
+Cancel.prototype.__CANCEL__ = true;
+
+module.exports = Cancel;
 
 
 /***/ }),
-/* 6 */,
 /* 7 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-/* globals __VUE_SSR_CONTEXT__ */
+"use strict";
 
-// this module is a runtime utility for cleaner component module output and will
-// be included in the final webpack user bundle
 
-module.exports = function normalizeComponent (
-  rawScriptExports,
-  compiledTemplate,
-  injectStyles,
-  scopeId,
-  moduleIdentifier /* server only */
-) {
-  var esModule
-  var scriptExports = rawScriptExports = rawScriptExports || {}
-
-  // ES6 modules interop
-  var type = typeof rawScriptExports.default
-  if (type === 'object' || type === 'function') {
-    esModule = rawScriptExports
-    scriptExports = rawScriptExports.default
-  }
-
-  // Vue.extend constructor export interop
-  var options = typeof scriptExports === 'function'
-    ? scriptExports.options
-    : scriptExports
-
-  // render functions
-  if (compiledTemplate) {
-    options.render = compiledTemplate.render
-    options.staticRenderFns = compiledTemplate.staticRenderFns
-  }
-
-  // scopedId
-  if (scopeId) {
-    options._scopeId = scopeId
-  }
-
-  var hook
-  if (moduleIdentifier) { // server build
-    hook = function (context) {
-      // 2.3 injection
-      context =
-        context || // cached call
-        (this.$vnode && this.$vnode.ssrContext) || // stateful
-        (this.parent && this.parent.$vnode && this.parent.$vnode.ssrContext) // functional
-      // 2.2 with runInNewContext: true
-      if (!context && typeof __VUE_SSR_CONTEXT__ !== 'undefined') {
-        context = __VUE_SSR_CONTEXT__
-      }
-      // inject component styles
-      if (injectStyles) {
-        injectStyles.call(this, context)
-      }
-      // register component module identifier for async chunk inferrence
-      if (context && context._registeredComponents) {
-        context._registeredComponents.add(moduleIdentifier)
-      }
-    }
-    // used by ssr in case component is cached and beforeCreate
-    // never gets called
-    options._ssrRegister = hook
-  } else if (injectStyles) {
-    hook = injectStyles
-  }
-
-  if (hook) {
-    var functional = options.functional
-    var existing = functional
-      ? options.render
-      : options.beforeCreate
-    if (!functional) {
-      // inject component registration as beforeCreate hook
-      options.beforeCreate = existing
-        ? [].concat(existing, hook)
-        : [hook]
-    } else {
-      // register for functioal component in vue file
-      options.render = function renderWithStyleInjection (h, context) {
-        hook.call(context)
-        return existing(h, context)
-      }
-    }
-  }
-
-  return {
-    esModule: esModule,
-    exports: scriptExports,
-    options: options
-  }
-}
+module.exports = function isCancel(value) {
+  return !!(value && value.__CANCEL__);
+};
 
 
 /***/ }),
 /* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
-  return _c('div', {
-    attrs: {
-      "id": "todo-app"
-    }
-  }, [_c('input', {
-    directives: [{
-      name: "model",
-      rawName: "v-model",
-      value: (_vm.newTodo),
-      expression: "newTodo"
-    }],
-    staticClass: "add-todo",
-    attrs: {
-      "autofocus": "",
-      "placeholder": "Enter a new task"
-    },
-    domProps: {
-      "value": (_vm.newTodo)
-    },
-    on: {
-      "keyup": function($event) {
-        if (!('button' in $event) && _vm._k($event.keyCode, "enter", 13)) { return null; }
-        _vm.addTodo($event)
-      },
-      "input": function($event) {
-        if ($event.target.composing) { return; }
-        _vm.newTodo = $event.target.value
-      }
-    }
-  }), _vm._v(" "), _c('section', {
-    staticClass: "todos"
-  })])
-},staticRenderFns: []}
-module.exports.render._withStripped = true
-if (false) {
-  module.hot.accept()
-  if (module.hot.data) {
-     require("vue-hot-reload-api").rerender("data-v-18136991", module.exports)
-  }
-}
+"use strict";
+
+
+var enhanceError = __webpack_require__(25);
+
+/**
+ * Create an Error with the specified message, config, error code, and response.
+ *
+ * @param {string} message The error message.
+ * @param {Object} config The config.
+ * @param {string} [code] The error code (for example, 'ECONNABORTED').
+ @ @param {Object} [response] The response.
+ * @returns {Error} The created error.
+ */
+module.exports = function createError(message, config, code, response) {
+  var error = new Error(message);
+  return enhanceError(error, config, code, response);
+};
+
 
 /***/ }),
 /* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
-// style-loader: Adds some css to the DOM by adding a <style> tag
+"use strict";
 
-// load the styles
-var content = __webpack_require__(4);
-if(typeof content === 'string') content = [[module.i, content, '']];
-if(content.locals) module.exports = content.locals;
-// add the styles to the DOM
-var update = __webpack_require__(10)("3860e7c0", content, false);
-// Hot Module Replacement
-if(false) {
- // When the styles change, update the <style> tags
- if(!content.locals) {
-   module.hot.accept("!!../../node_modules/css-loader/index.js!../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-18136991\",\"scoped\":false,\"hasInlineConfig\":false}!./styles.css", function() {
-     var newContent = require("!!../../node_modules/css-loader/index.js!../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-18136991\",\"scoped\":false,\"hasInlineConfig\":false}!./styles.css");
-     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-     update(newContent);
-   });
- }
- // When the module is disposed, remove the <style> tags
- module.hot.dispose(function() { update(); });
-}
+
+module.exports = function bind(fn, thisArg) {
+  return function wrap() {
+    var args = new Array(arguments.length);
+    for (var i = 0; i < args.length; i++) {
+      args[i] = arguments[i];
+    }
+    return fn.apply(thisArg, args);
+  };
+};
+
 
 /***/ }),
 /* 10 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, exports) {
 
-/*
-  MIT License http://www.opensource.org/licenses/mit-license.php
-  Author Tobias Koppers @sokra
-  Modified by Evan You @yyx990803
-*/
-
-var hasDocument = typeof document !== 'undefined'
-
-if (typeof DEBUG !== 'undefined' && DEBUG) {
-  if (!hasDocument) {
-    throw new Error(
-    'vue-style-loader cannot be used in a non-browser environment. ' +
-    "Use { target: 'node' } in your Webpack config to indicate a server-rendering environment."
-  ) }
-}
-
-var listToStyles = __webpack_require__(11)
-
-/*
-type StyleObject = {
-  id: number;
-  parts: Array<StyleObjectPart>
-}
-
-type StyleObjectPart = {
-  css: string;
-  media: string;
-  sourceMap: ?string
-}
-*/
-
-var stylesInDom = {/*
-  [id: number]: {
-    id: number,
-    refs: number,
-    parts: Array<(obj?: StyleObjectPart) => void>
-  }
-*/}
-
-var head = hasDocument && (document.head || document.getElementsByTagName('head')[0])
-var singletonElement = null
-var singletonCounter = 0
-var isProduction = false
-var noop = function () {}
-
-// Force single-tag solution on IE6-9, which has a hard limit on the # of <style>
-// tags it will allow on a page
-var isOldIE = typeof navigator !== 'undefined' && /msie [6-9]\b/.test(navigator.userAgent.toLowerCase())
-
-module.exports = function (parentId, list, _isProduction) {
-  isProduction = _isProduction
-
-  var styles = listToStyles(parentId, list)
-  addStylesToDom(styles)
-
-  return function update (newList) {
-    var mayRemove = []
-    for (var i = 0; i < styles.length; i++) {
-      var item = styles[i]
-      var domStyle = stylesInDom[item.id]
-      domStyle.refs--
-      mayRemove.push(domStyle)
-    }
-    if (newList) {
-      styles = listToStyles(parentId, newList)
-      addStylesToDom(styles)
-    } else {
-      styles = []
-    }
-    for (var i = 0; i < mayRemove.length; i++) {
-      var domStyle = mayRemove[i]
-      if (domStyle.refs === 0) {
-        for (var j = 0; j < domStyle.parts.length; j++) {
-          domStyle.parts[j]()
-        }
-        delete stylesInDom[domStyle.id]
-      }
-    }
-  }
-}
-
-function addStylesToDom (styles /* Array<StyleObject> */) {
-  for (var i = 0; i < styles.length; i++) {
-    var item = styles[i]
-    var domStyle = stylesInDom[item.id]
-    if (domStyle) {
-      domStyle.refs++
-      for (var j = 0; j < domStyle.parts.length; j++) {
-        domStyle.parts[j](item.parts[j])
-      }
-      for (; j < item.parts.length; j++) {
-        domStyle.parts.push(addStyle(item.parts[j]))
-      }
-      if (domStyle.parts.length > item.parts.length) {
-        domStyle.parts.length = item.parts.length
-      }
-    } else {
-      var parts = []
-      for (var j = 0; j < item.parts.length; j++) {
-        parts.push(addStyle(item.parts[j]))
-      }
-      stylesInDom[item.id] = { id: item.id, refs: 1, parts: parts }
-    }
-  }
-}
-
-function createStyleElement () {
-  var styleElement = document.createElement('style')
-  styleElement.type = 'text/css'
-  head.appendChild(styleElement)
-  return styleElement
-}
-
-function addStyle (obj /* StyleObjectPart */) {
-  var update, remove
-  var styleElement = document.querySelector('style[data-vue-ssr-id~="' + obj.id + '"]')
-
-  if (styleElement) {
-    if (isProduction) {
-      // has SSR styles and in production mode.
-      // simply do nothing.
-      return noop
-    } else {
-      // has SSR styles but in dev mode.
-      // for some reason Chrome can't handle source map in server-rendered
-      // style tags - source maps in <style> only works if the style tag is
-      // created and inserted dynamically. So we remove the server rendered
-      // styles and inject new ones.
-      styleElement.parentNode.removeChild(styleElement)
-    }
-  }
-
-  if (isOldIE) {
-    // use singleton mode for IE9.
-    var styleIndex = singletonCounter++
-    styleElement = singletonElement || (singletonElement = createStyleElement())
-    update = applyToSingletonTag.bind(null, styleElement, styleIndex, false)
-    remove = applyToSingletonTag.bind(null, styleElement, styleIndex, true)
-  } else {
-    // use multi-style-tag mode in all other cases
-    styleElement = createStyleElement()
-    update = applyToTag.bind(null, styleElement)
-    remove = function () {
-      styleElement.parentNode.removeChild(styleElement)
-    }
-  }
-
-  update(obj)
-
-  return function updateStyle (newObj /* StyleObjectPart */) {
-    if (newObj) {
-      if (newObj.css === obj.css &&
-          newObj.media === obj.media &&
-          newObj.sourceMap === obj.sourceMap) {
-        return
-      }
-      update(obj = newObj)
-    } else {
-      remove()
-    }
-  }
-}
-
-var replaceText = (function () {
-  var textStore = []
-
-  return function (index, replacement) {
-    textStore[index] = replacement
-    return textStore.filter(Boolean).join('\n')
-  }
-})()
-
-function applyToSingletonTag (styleElement, index, remove, obj) {
-  var css = remove ? '' : obj.css
-
-  if (styleElement.styleSheet) {
-    styleElement.styleSheet.cssText = replaceText(index, css)
-  } else {
-    var cssNode = document.createTextNode(css)
-    var childNodes = styleElement.childNodes
-    if (childNodes[index]) styleElement.removeChild(childNodes[index])
-    if (childNodes.length) {
-      styleElement.insertBefore(cssNode, childNodes[index])
-    } else {
-      styleElement.appendChild(cssNode)
-    }
-  }
-}
-
-function applyToTag (styleElement, obj) {
-  var css = obj.css
-  var media = obj.media
-  var sourceMap = obj.sourceMap
-
-  if (media) {
-    styleElement.setAttribute('media', media)
-  }
-
-  if (sourceMap) {
-    // https://developer.chrome.com/devtools/docs/javascript-debugging
-    // this makes source maps inside style tags work properly in Chrome
-    css += '\n/*# sourceURL=' + sourceMap.sources[0] + ' */'
-    // http://stackoverflow.com/a/26603875
-    css += '\n/*# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(JSON.stringify(sourceMap)))) + ' */'
-  }
-
-  if (styleElement.styleSheet) {
-    styleElement.styleSheet.cssText = css
-  } else {
-    while (styleElement.firstChild) {
-      styleElement.removeChild(styleElement.firstChild)
-    }
-    styleElement.appendChild(document.createTextNode(css))
-  }
-}
-
+var core = module.exports = {version: '2.4.0'};
+if(typeof __e == 'number')__e = core; // eslint-disable-line no-undef
 
 /***/ }),
 /* 11 */
 /***/ (function(module, exports) {
 
-/**
- * Translates the list format produced by css-loader into something
- * easier to manipulate.
- */
-module.exports = function listToStyles (parentId, list) {
-  var styles = []
-  var newStyles = {}
-  for (var i = 0; i < list.length; i++) {
-    var item = list[i]
-    var id = item[0]
-    var css = item[1]
-    var media = item[2]
-    var sourceMap = item[3]
-    var part = {
-      id: parentId + ':' + i,
-      css: css,
-      media: media,
-      sourceMap: sourceMap
-    }
-    if (!newStyles[id]) {
-      styles.push(newStyles[id] = { id: id, parts: [part] })
-    } else {
-      newStyles[id].parts.push(part)
-    }
+module.exports = function(exec){
+  try {
+    return !!exec();
+  } catch(e){
+    return true;
   }
-  return styles
-}
-
+};
 
 /***/ }),
 /* 12 */
+/***/ (function(module, exports) {
+
+// https://github.com/zloirock/core-js/issues/86#issuecomment-115759028
+var global = module.exports = typeof window != 'undefined' && window.Math == Math
+  ? window : typeof self != 'undefined' && self.Math == Math ? self : Function('return this')();
+if(typeof __g == 'number')__g = global; // eslint-disable-line no-undef
+
+/***/ }),
+/* 13 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var anObject       = __webpack_require__(47)
+  , IE8_DOM_DEFINE = __webpack_require__(52)
+  , toPrimitive    = __webpack_require__(54)
+  , dP             = Object.defineProperty;
+
+exports.f = __webpack_require__(1) ? Object.defineProperty : function defineProperty(O, P, Attributes){
+  anObject(O);
+  P = toPrimitive(P, true);
+  anObject(Attributes);
+  if(IE8_DOM_DEFINE)try {
+    return dP(O, P, Attributes);
+  } catch(e){ /* empty */ }
+  if('get' in Attributes || 'set' in Attributes)throw TypeError('Accessors not supported!');
+  if('value' in Attributes)O[P] = Attributes.value;
+  return O;
+};
+
+/***/ }),
+/* 14 */
 /***/ (function(module, exports) {
 
 var g;
@@ -699,23 +1037,63 @@ module.exports = g;
 
 
 /***/ }),
-/* 13 */
+/* 15 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 14 */
+/* 16 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 15 */,
-/* 16 */,
-/* 17 */,
-/* 18 */,
-/* 19 */
+/* 17 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+function injectStyle (ssrContext) {
+  if (disposed) return
+  __webpack_require__(66)
+}
+var Component = __webpack_require__(64)(
+  /* script */
+  __webpack_require__(37),
+  /* template */
+  __webpack_require__(65),
+  /* styles */
+  injectStyle,
+  /* scopeId */
+  null,
+  /* moduleIdentifier (server only) */
+  null
+)
+Component.options.__file = "C:\\Users\\Serge\\Projects\\todo-challenge\\src\\app.vue"
+if (Component.esModule && Object.keys(Component.esModule).some(function (key) {return key !== "default" && key.substr(0, 2) !== "__"})) {console.error("named exports are not supported in *.vue files.")}
+if (Component.options.functional) {console.error("[vue-loader] app.vue: functional components are not supported with templates, they should use render functions.")}
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-18136991", Component.options)
+  } else {
+    hotAPI.reload("data-v-18136991", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/*!
@@ -10343,7 +10721,4381 @@ return Vue$3;
 
 })));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(12)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(14)))
+
+/***/ }),
+/* 19 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(20);
+
+/***/ }),
+/* 20 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var utils = __webpack_require__(0);
+var bind = __webpack_require__(9);
+var Axios = __webpack_require__(22);
+var defaults = __webpack_require__(2);
+
+/**
+ * Create an instance of Axios
+ *
+ * @param {Object} defaultConfig The default config for the instance
+ * @return {Axios} A new instance of Axios
+ */
+function createInstance(defaultConfig) {
+  var context = new Axios(defaultConfig);
+  var instance = bind(Axios.prototype.request, context);
+
+  // Copy axios.prototype to instance
+  utils.extend(instance, Axios.prototype, context);
+
+  // Copy context to instance
+  utils.extend(instance, context);
+
+  return instance;
+}
+
+// Create the default instance to be exported
+var axios = createInstance(defaults);
+
+// Expose Axios class to allow class inheritance
+axios.Axios = Axios;
+
+// Factory for creating new instances
+axios.create = function create(instanceConfig) {
+  return createInstance(utils.merge(defaults, instanceConfig));
+};
+
+// Expose Cancel & CancelToken
+axios.Cancel = __webpack_require__(6);
+axios.CancelToken = __webpack_require__(21);
+axios.isCancel = __webpack_require__(7);
+
+// Expose all/spread
+axios.all = function all(promises) {
+  return Promise.all(promises);
+};
+axios.spread = __webpack_require__(36);
+
+module.exports = axios;
+
+// Allow use of default import syntax in TypeScript
+module.exports.default = axios;
+
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var Cancel = __webpack_require__(6);
+
+/**
+ * A `CancelToken` is an object that can be used to request cancellation of an operation.
+ *
+ * @class
+ * @param {Function} executor The executor function.
+ */
+function CancelToken(executor) {
+  if (typeof executor !== 'function') {
+    throw new TypeError('executor must be a function.');
+  }
+
+  var resolvePromise;
+  this.promise = new Promise(function promiseExecutor(resolve) {
+    resolvePromise = resolve;
+  });
+
+  var token = this;
+  executor(function cancel(message) {
+    if (token.reason) {
+      // Cancellation has already been requested
+      return;
+    }
+
+    token.reason = new Cancel(message);
+    resolvePromise(token.reason);
+  });
+}
+
+/**
+ * Throws a `Cancel` if cancellation has been requested.
+ */
+CancelToken.prototype.throwIfRequested = function throwIfRequested() {
+  if (this.reason) {
+    throw this.reason;
+  }
+};
+
+/**
+ * Returns an object that contains a new `CancelToken` and a function that, when called,
+ * cancels the `CancelToken`.
+ */
+CancelToken.source = function source() {
+  var cancel;
+  var token = new CancelToken(function executor(c) {
+    cancel = c;
+  });
+  return {
+    token: token,
+    cancel: cancel
+  };
+};
+
+module.exports = CancelToken;
+
+
+/***/ }),
+/* 22 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var defaults = __webpack_require__(2);
+var utils = __webpack_require__(0);
+var InterceptorManager = __webpack_require__(23);
+var dispatchRequest = __webpack_require__(24);
+var isAbsoluteURL = __webpack_require__(32);
+var combineURLs = __webpack_require__(30);
+
+/**
+ * Create a new instance of Axios
+ *
+ * @param {Object} instanceConfig The default config for the instance
+ */
+function Axios(instanceConfig) {
+  this.defaults = instanceConfig;
+  this.interceptors = {
+    request: new InterceptorManager(),
+    response: new InterceptorManager()
+  };
+}
+
+/**
+ * Dispatch a request
+ *
+ * @param {Object} config The config specific for this request (merged with this.defaults)
+ */
+Axios.prototype.request = function request(config) {
+  /*eslint no-param-reassign:0*/
+  // Allow for axios('example/url'[, config]) a la fetch API
+  if (typeof config === 'string') {
+    config = utils.merge({
+      url: arguments[0]
+    }, arguments[1]);
+  }
+
+  config = utils.merge(defaults, this.defaults, { method: 'get' }, config);
+
+  // Support baseURL config
+  if (config.baseURL && !isAbsoluteURL(config.url)) {
+    config.url = combineURLs(config.baseURL, config.url);
+  }
+
+  // Hook up interceptors middleware
+  var chain = [dispatchRequest, undefined];
+  var promise = Promise.resolve(config);
+
+  this.interceptors.request.forEach(function unshiftRequestInterceptors(interceptor) {
+    chain.unshift(interceptor.fulfilled, interceptor.rejected);
+  });
+
+  this.interceptors.response.forEach(function pushResponseInterceptors(interceptor) {
+    chain.push(interceptor.fulfilled, interceptor.rejected);
+  });
+
+  while (chain.length) {
+    promise = promise.then(chain.shift(), chain.shift());
+  }
+
+  return promise;
+};
+
+// Provide aliases for supported request methods
+utils.forEach(['delete', 'get', 'head', 'options'], function forEachMethodNoData(method) {
+  /*eslint func-names:0*/
+  Axios.prototype[method] = function(url, config) {
+    return this.request(utils.merge(config || {}, {
+      method: method,
+      url: url
+    }));
+  };
+});
+
+utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
+  /*eslint func-names:0*/
+  Axios.prototype[method] = function(url, data, config) {
+    return this.request(utils.merge(config || {}, {
+      method: method,
+      url: url,
+      data: data
+    }));
+  };
+});
+
+module.exports = Axios;
+
+
+/***/ }),
+/* 23 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var utils = __webpack_require__(0);
+
+function InterceptorManager() {
+  this.handlers = [];
+}
+
+/**
+ * Add a new interceptor to the stack
+ *
+ * @param {Function} fulfilled The function to handle `then` for a `Promise`
+ * @param {Function} rejected The function to handle `reject` for a `Promise`
+ *
+ * @return {Number} An ID used to remove interceptor later
+ */
+InterceptorManager.prototype.use = function use(fulfilled, rejected) {
+  this.handlers.push({
+    fulfilled: fulfilled,
+    rejected: rejected
+  });
+  return this.handlers.length - 1;
+};
+
+/**
+ * Remove an interceptor from the stack
+ *
+ * @param {Number} id The ID that was returned by `use`
+ */
+InterceptorManager.prototype.eject = function eject(id) {
+  if (this.handlers[id]) {
+    this.handlers[id] = null;
+  }
+};
+
+/**
+ * Iterate over all the registered interceptors
+ *
+ * This method is particularly useful for skipping over any
+ * interceptors that may have become `null` calling `eject`.
+ *
+ * @param {Function} fn The function to call for each interceptor
+ */
+InterceptorManager.prototype.forEach = function forEach(fn) {
+  utils.forEach(this.handlers, function forEachHandler(h) {
+    if (h !== null) {
+      fn(h);
+    }
+  });
+};
+
+module.exports = InterceptorManager;
+
+
+/***/ }),
+/* 24 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var utils = __webpack_require__(0);
+var transformData = __webpack_require__(27);
+var isCancel = __webpack_require__(7);
+var defaults = __webpack_require__(2);
+
+/**
+ * Throws a `Cancel` if cancellation has been requested.
+ */
+function throwIfCancellationRequested(config) {
+  if (config.cancelToken) {
+    config.cancelToken.throwIfRequested();
+  }
+}
+
+/**
+ * Dispatch a request to the server using the configured adapter.
+ *
+ * @param {object} config The config that is to be used for the request
+ * @returns {Promise} The Promise to be fulfilled
+ */
+module.exports = function dispatchRequest(config) {
+  throwIfCancellationRequested(config);
+
+  // Ensure headers exist
+  config.headers = config.headers || {};
+
+  // Transform request data
+  config.data = transformData(
+    config.data,
+    config.headers,
+    config.transformRequest
+  );
+
+  // Flatten headers
+  config.headers = utils.merge(
+    config.headers.common || {},
+    config.headers[config.method] || {},
+    config.headers || {}
+  );
+
+  utils.forEach(
+    ['delete', 'get', 'head', 'post', 'put', 'patch', 'common'],
+    function cleanHeaderConfig(method) {
+      delete config.headers[method];
+    }
+  );
+
+  var adapter = config.adapter || defaults.adapter;
+
+  return adapter(config).then(function onAdapterResolution(response) {
+    throwIfCancellationRequested(config);
+
+    // Transform response data
+    response.data = transformData(
+      response.data,
+      response.headers,
+      config.transformResponse
+    );
+
+    return response;
+  }, function onAdapterRejection(reason) {
+    if (!isCancel(reason)) {
+      throwIfCancellationRequested(config);
+
+      // Transform response data
+      if (reason && reason.response) {
+        reason.response.data = transformData(
+          reason.response.data,
+          reason.response.headers,
+          config.transformResponse
+        );
+      }
+    }
+
+    return Promise.reject(reason);
+  });
+};
+
+
+/***/ }),
+/* 25 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * Update an Error with the specified config, error code, and response.
+ *
+ * @param {Error} error The error to update.
+ * @param {Object} config The config.
+ * @param {string} [code] The error code (for example, 'ECONNABORTED').
+ @ @param {Object} [response] The response.
+ * @returns {Error} The error.
+ */
+module.exports = function enhanceError(error, config, code, response) {
+  error.config = config;
+  if (code) {
+    error.code = code;
+  }
+  error.response = response;
+  return error;
+};
+
+
+/***/ }),
+/* 26 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var createError = __webpack_require__(8);
+
+/**
+ * Resolve or reject a Promise based on response status.
+ *
+ * @param {Function} resolve A function that resolves the promise.
+ * @param {Function} reject A function that rejects the promise.
+ * @param {object} response The response.
+ */
+module.exports = function settle(resolve, reject, response) {
+  var validateStatus = response.config.validateStatus;
+  // Note: status is not exposed by XDomainRequest
+  if (!response.status || !validateStatus || validateStatus(response.status)) {
+    resolve(response);
+  } else {
+    reject(createError(
+      'Request failed with status code ' + response.status,
+      response.config,
+      null,
+      response
+    ));
+  }
+};
+
+
+/***/ }),
+/* 27 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var utils = __webpack_require__(0);
+
+/**
+ * Transform the data for a request or a response
+ *
+ * @param {Object|String} data The data to be transformed
+ * @param {Array} headers The headers for the request or response
+ * @param {Array|Function} fns A single function or Array of functions
+ * @returns {*} The resulting transformed data
+ */
+module.exports = function transformData(data, headers, fns) {
+  /*eslint no-param-reassign:0*/
+  utils.forEach(fns, function transform(fn) {
+    data = fn(data, headers);
+  });
+
+  return data;
+};
+
+
+/***/ }),
+/* 28 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+// btoa polyfill for IE<10 courtesy https://github.com/davidchambers/Base64.js
+
+var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+
+function E() {
+  this.message = 'String contains an invalid character';
+}
+E.prototype = new Error;
+E.prototype.code = 5;
+E.prototype.name = 'InvalidCharacterError';
+
+function btoa(input) {
+  var str = String(input);
+  var output = '';
+  for (
+    // initialize result and counter
+    var block, charCode, idx = 0, map = chars;
+    // if the next str index does not exist:
+    //   change the mapping table to "="
+    //   check if d has no fractional digits
+    str.charAt(idx | 0) || (map = '=', idx % 1);
+    // "8 - idx % 1 * 8" generates the sequence 2, 4, 6, 8
+    output += map.charAt(63 & block >> 8 - idx % 1 * 8)
+  ) {
+    charCode = str.charCodeAt(idx += 3 / 4);
+    if (charCode > 0xFF) {
+      throw new E();
+    }
+    block = block << 8 | charCode;
+  }
+  return output;
+}
+
+module.exports = btoa;
+
+
+/***/ }),
+/* 29 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var utils = __webpack_require__(0);
+
+function encode(val) {
+  return encodeURIComponent(val).
+    replace(/%40/gi, '@').
+    replace(/%3A/gi, ':').
+    replace(/%24/g, '$').
+    replace(/%2C/gi, ',').
+    replace(/%20/g, '+').
+    replace(/%5B/gi, '[').
+    replace(/%5D/gi, ']');
+}
+
+/**
+ * Build a URL by appending params to the end
+ *
+ * @param {string} url The base of the url (e.g., http://www.google.com)
+ * @param {object} [params] The params to be appended
+ * @returns {string} The formatted url
+ */
+module.exports = function buildURL(url, params, paramsSerializer) {
+  /*eslint no-param-reassign:0*/
+  if (!params) {
+    return url;
+  }
+
+  var serializedParams;
+  if (paramsSerializer) {
+    serializedParams = paramsSerializer(params);
+  } else if (utils.isURLSearchParams(params)) {
+    serializedParams = params.toString();
+  } else {
+    var parts = [];
+
+    utils.forEach(params, function serialize(val, key) {
+      if (val === null || typeof val === 'undefined') {
+        return;
+      }
+
+      if (utils.isArray(val)) {
+        key = key + '[]';
+      }
+
+      if (!utils.isArray(val)) {
+        val = [val];
+      }
+
+      utils.forEach(val, function parseValue(v) {
+        if (utils.isDate(v)) {
+          v = v.toISOString();
+        } else if (utils.isObject(v)) {
+          v = JSON.stringify(v);
+        }
+        parts.push(encode(key) + '=' + encode(v));
+      });
+    });
+
+    serializedParams = parts.join('&');
+  }
+
+  if (serializedParams) {
+    url += (url.indexOf('?') === -1 ? '?' : '&') + serializedParams;
+  }
+
+  return url;
+};
+
+
+/***/ }),
+/* 30 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * Creates a new URL by combining the specified URLs
+ *
+ * @param {string} baseURL The base URL
+ * @param {string} relativeURL The relative URL
+ * @returns {string} The combined URL
+ */
+module.exports = function combineURLs(baseURL, relativeURL) {
+  return relativeURL
+    ? baseURL.replace(/\/+$/, '') + '/' + relativeURL.replace(/^\/+/, '')
+    : baseURL;
+};
+
+
+/***/ }),
+/* 31 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var utils = __webpack_require__(0);
+
+module.exports = (
+  utils.isStandardBrowserEnv() ?
+
+  // Standard browser envs support document.cookie
+  (function standardBrowserEnv() {
+    return {
+      write: function write(name, value, expires, path, domain, secure) {
+        var cookie = [];
+        cookie.push(name + '=' + encodeURIComponent(value));
+
+        if (utils.isNumber(expires)) {
+          cookie.push('expires=' + new Date(expires).toGMTString());
+        }
+
+        if (utils.isString(path)) {
+          cookie.push('path=' + path);
+        }
+
+        if (utils.isString(domain)) {
+          cookie.push('domain=' + domain);
+        }
+
+        if (secure === true) {
+          cookie.push('secure');
+        }
+
+        document.cookie = cookie.join('; ');
+      },
+
+      read: function read(name) {
+        var match = document.cookie.match(new RegExp('(^|;\\s*)(' + name + ')=([^;]*)'));
+        return (match ? decodeURIComponent(match[3]) : null);
+      },
+
+      remove: function remove(name) {
+        this.write(name, '', Date.now() - 86400000);
+      }
+    };
+  })() :
+
+  // Non standard browser env (web workers, react-native) lack needed support.
+  (function nonStandardBrowserEnv() {
+    return {
+      write: function write() {},
+      read: function read() { return null; },
+      remove: function remove() {}
+    };
+  })()
+);
+
+
+/***/ }),
+/* 32 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * Determines whether the specified URL is absolute
+ *
+ * @param {string} url The URL to test
+ * @returns {boolean} True if the specified URL is absolute, otherwise false
+ */
+module.exports = function isAbsoluteURL(url) {
+  // A URL is considered absolute if it begins with "<scheme>://" or "//" (protocol-relative URL).
+  // RFC 3986 defines scheme name as a sequence of characters beginning with a letter and followed
+  // by any combination of letters, digits, plus, period, or hyphen.
+  return /^([a-z][a-z\d\+\-\.]*:)?\/\//i.test(url);
+};
+
+
+/***/ }),
+/* 33 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var utils = __webpack_require__(0);
+
+module.exports = (
+  utils.isStandardBrowserEnv() ?
+
+  // Standard browser envs have full support of the APIs needed to test
+  // whether the request URL is of the same origin as current location.
+  (function standardBrowserEnv() {
+    var msie = /(msie|trident)/i.test(navigator.userAgent);
+    var urlParsingNode = document.createElement('a');
+    var originURL;
+
+    /**
+    * Parse a URL to discover it's components
+    *
+    * @param {String} url The URL to be parsed
+    * @returns {Object}
+    */
+    function resolveURL(url) {
+      var href = url;
+
+      if (msie) {
+        // IE needs attribute set twice to normalize properties
+        urlParsingNode.setAttribute('href', href);
+        href = urlParsingNode.href;
+      }
+
+      urlParsingNode.setAttribute('href', href);
+
+      // urlParsingNode provides the UrlUtils interface - http://url.spec.whatwg.org/#urlutils
+      return {
+        href: urlParsingNode.href,
+        protocol: urlParsingNode.protocol ? urlParsingNode.protocol.replace(/:$/, '') : '',
+        host: urlParsingNode.host,
+        search: urlParsingNode.search ? urlParsingNode.search.replace(/^\?/, '') : '',
+        hash: urlParsingNode.hash ? urlParsingNode.hash.replace(/^#/, '') : '',
+        hostname: urlParsingNode.hostname,
+        port: urlParsingNode.port,
+        pathname: (urlParsingNode.pathname.charAt(0) === '/') ?
+                  urlParsingNode.pathname :
+                  '/' + urlParsingNode.pathname
+      };
+    }
+
+    originURL = resolveURL(window.location.href);
+
+    /**
+    * Determine if a URL shares the same origin as the current location
+    *
+    * @param {String} requestURL The URL to test
+    * @returns {boolean} True if URL shares the same origin, otherwise false
+    */
+    return function isURLSameOrigin(requestURL) {
+      var parsed = (utils.isString(requestURL)) ? resolveURL(requestURL) : requestURL;
+      return (parsed.protocol === originURL.protocol &&
+            parsed.host === originURL.host);
+    };
+  })() :
+
+  // Non standard browser envs (web workers, react-native) lack needed support.
+  (function nonStandardBrowserEnv() {
+    return function isURLSameOrigin() {
+      return true;
+    };
+  })()
+);
+
+
+/***/ }),
+/* 34 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var utils = __webpack_require__(0);
+
+module.exports = function normalizeHeaderName(headers, normalizedName) {
+  utils.forEach(headers, function processHeader(value, name) {
+    if (name !== normalizedName && name.toUpperCase() === normalizedName.toUpperCase()) {
+      headers[normalizedName] = value;
+      delete headers[name];
+    }
+  });
+};
+
+
+/***/ }),
+/* 35 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var utils = __webpack_require__(0);
+
+/**
+ * Parse headers into an object
+ *
+ * ```
+ * Date: Wed, 27 Aug 2014 08:58:49 GMT
+ * Content-Type: application/json
+ * Connection: keep-alive
+ * Transfer-Encoding: chunked
+ * ```
+ *
+ * @param {String} headers Headers needing to be parsed
+ * @returns {Object} Headers parsed into an object
+ */
+module.exports = function parseHeaders(headers) {
+  var parsed = {};
+  var key;
+  var val;
+  var i;
+
+  if (!headers) { return parsed; }
+
+  utils.forEach(headers.split('\n'), function parser(line) {
+    i = line.indexOf(':');
+    key = utils.trim(line.substr(0, i)).toLowerCase();
+    val = utils.trim(line.substr(i + 1));
+
+    if (key) {
+      parsed[key] = parsed[key] ? parsed[key] + ', ' + val : val;
+    }
+  });
+
+  return parsed;
+};
+
+
+/***/ }),
+/* 36 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * Syntactic sugar for invoking a function and expanding an array for arguments.
+ *
+ * Common use case would be to use `Function.prototype.apply`.
+ *
+ *  ```js
+ *  function f(x, y, z) {}
+ *  var args = [1, 2, 3];
+ *  f.apply(null, args);
+ *  ```
+ *
+ * With `spread` this example can be re-written.
+ *
+ *  ```js
+ *  spread(function(x, y, z) {})([1, 2, 3]);
+ *  ```
+ *
+ * @param {Function} callback
+ * @returns {Function}
+ */
+module.exports = function spread(callback) {
+  return function wrap(arr) {
+    return callback.apply(null, arr);
+  };
+};
+
+
+/***/ }),
+/* 37 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _restServices = __webpack_require__(39);
+
+var _restServices2 = _interopRequireDefault(_restServices);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var TodoRestServices = new _restServices2.default(); // Instantiate our custom services class.
+
+var todoTitle, todoDescription;
+
+exports.default = {
+  data: function data() {
+    return {
+      inputString: '',
+      todos: []
+    };
+  },
+
+  watch: {},
+  methods: {
+    /**
+     * Add a Todo Item for the current user and save it.
+     */
+    addTodo: function addTodo() {
+      var _this = this;
+
+      var todo = {
+        "title": this.inputString,
+        "description": this.inputString,
+        "completed": false
+      };
+      TodoRestServices.saveTodo(todo).then(function (response) {
+        _this.todos.splice(0);
+        _this.fetchTodo(); // update the array of todos in case of success only.
+        console.log(response.statusText);
+      }).catch(function (error) {
+        window.alert('An error occured while adding the todo');
+        console.log(error);
+      });
+    },
+    /**
+     * Request all todos to be fetched, or a specific one using an ID
+     */
+    fetchTodo: function fetchTodo() {
+      var _this2 = this;
+
+      if (!this.todoid) {
+        TodoRestServices.requestTodo().then(function (response) {
+          response.data.map(function (todo) {
+            _this2.todos.push({
+              "_id": todo._id,
+              "title": todo.title,
+              "description": todo.description,
+              "completed": todo.completed
+            });
+          });
+        }); // Fetch all todos 
+      }
+      var specificTodo = TodoRestServices.requestTodo(this.todoid);
+    },
+    /**
+     * Remove a specific Todo item from the database.
+     * @param {object} todo - the todo item to be deleted.
+     */
+    removeTodo: function removeTodo(todo) {
+      var _this3 = this;
+
+      TodoRestServices.deleteTodo(todo._id).then(function (response) {
+        _this3.todos.splice(_this3.todos.indexOf(todo), 1);
+        console.log(response.statusText);
+      }).catch(function (error) {
+        window.alert('An error occured while deleting the todo');
+        console.log(error);
+      });
+    },
+    /**
+     * Update a specific Todo item from the database.
+     * @param {object} todo - the todo item to be updated.
+     */
+    updateTodo: function updateTodo(todo) {
+      console.log(todo);
+      TodoRestServices.updateTodo(todo).then(function (response) {
+        console.log(response.statusText);
+      }).catch(function (error) {
+        window.alert('An error occured while updating the todo');
+        console.log(error);
+      });
+    }
+  },
+  mounted: function mounted() {
+    this.fetchTodo();
+  }
+};
+
+/***/ }),
+/* 38 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _vue = __webpack_require__(18);
+
+var _vue2 = _interopRequireDefault(_vue);
+
+var _app = __webpack_require__(17);
+
+var _app2 = _interopRequireDefault(_app);
+
+__webpack_require__(15);
+
+__webpack_require__(16);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+new _vue2.default({
+    el: '.todo',
+    components: { App: _app2.default }
+});
+
+/***/ }),
+/* 39 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _classCallCheck2 = __webpack_require__(41);
+
+var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
+
+var _createClass2 = __webpack_require__(42);
+
+var _createClass3 = _interopRequireDefault(_createClass2);
+
+var _axios = __webpack_require__(19);
+
+var _axios2 = _interopRequireDefault(_axios);
+
+var _path = __webpack_require__(60);
+
+var _path2 = _interopRequireDefault(_path);
+
+var _querystring = __webpack_require__(63);
+
+var _querystring2 = _interopRequireDefault(_querystring);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/**
+ * Setting the default Parameters for Axios
+ */
+_axios2.default.defaults.baseURL = 'http://localhost:3000/api';
+_axios2.default.defaults.timeout = 10000;
+_axios2.default.defaults.headers.post['Content-Type'], _axios2.default.defaults.headers.put['Content-Type'] = "application/x-www-form-urlencoded";
+
+var RestServices = function () {
+    function RestServices() {
+        (0, _classCallCheck3.default)(this, RestServices);
+    }
+
+    (0, _createClass3.default)(RestServices, [{
+        key: 'requestTodo',
+
+        /**
+         * Fetch all Todos or a specific Todo by passing a Todo ID.
+         * @param {string} [todoid] - a unique identifier for todos.
+         */
+        value: function requestTodo(todoid) {
+            if (!todoid) {
+                return _axios2.default.get('todo') // fetch all Todos.
+                .catch(function (error) {
+                    console.log(error);
+                });
+            } else if (todoid) {
+                return _axios2.default.get(_path2.default.join('todo', todoid.toString())) // get a specific todo.
+                .catch(function (error) {
+                    console.log(error);
+                });
+            }
+            return;
+        }
+        /**
+         * Saves a todo item in the database as a document.
+         * @param {object} todo - a JSON valid todo object based on the todo model defined in the API
+         */
+
+    }, {
+        key: 'saveTodo',
+        value: function saveTodo(todo) {
+            if (!todo) {
+                return;
+            }
+            var data = _querystring2.default.stringify(todo);
+            return _axios2.default.post('todo', data).catch(function (error) {
+                console.log(error);
+            });
+        }
+        /**
+         * Updates a todo item in the database as a document.
+         * @param {object} todo - a JSON valid todo object based on the todo model defined in the API
+         */
+
+    }, {
+        key: 'updateTodo',
+        value: function updateTodo(todo) {
+            if (!todo) {
+                return;
+            }
+            var data = _querystring2.default.stringify(todo);
+            return _axios2.default.put(_path2.default.join('todo', todo._id), data).catch(function (error) {
+                console.log(error);
+            });
+        }
+        /**
+         * Deletes a todo item from the database document based on the provided ID.
+         * @param {string} todoid - the identifier of the todo item to be deleted from the document.
+         */
+
+    }, {
+        key: 'deleteTodo',
+        value: function deleteTodo(todoid) {
+            if (!todoid) {
+                return;
+            }
+            return _axios2.default.delete(_path2.default.join('todo', todoid)).catch(function (error) {
+                console.log(error);
+            });
+        }
+    }]);
+    return RestServices;
+}();
+
+exports.default = RestServices;
+
+/***/ }),
+/* 40 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = { "default": __webpack_require__(45), __esModule: true };
+
+/***/ }),
+/* 41 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+exports.__esModule = true;
+
+exports.default = function (instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+};
+
+/***/ }),
+/* 42 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+exports.__esModule = true;
+
+var _defineProperty = __webpack_require__(40);
+
+var _defineProperty2 = _interopRequireDefault(_defineProperty);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+exports.default = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];
+      descriptor.enumerable = descriptor.enumerable || false;
+      descriptor.configurable = true;
+      if ("value" in descriptor) descriptor.writable = true;
+      (0, _defineProperty2.default)(target, descriptor.key, descriptor);
+    }
+  }
+
+  return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);
+    if (staticProps) defineProperties(Constructor, staticProps);
+    return Constructor;
+  };
+}();
+
+/***/ }),
+/* 43 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+exports.byteLength = byteLength
+exports.toByteArray = toByteArray
+exports.fromByteArray = fromByteArray
+
+var lookup = []
+var revLookup = []
+var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
+
+var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+for (var i = 0, len = code.length; i < len; ++i) {
+  lookup[i] = code[i]
+  revLookup[code.charCodeAt(i)] = i
+}
+
+revLookup['-'.charCodeAt(0)] = 62
+revLookup['_'.charCodeAt(0)] = 63
+
+function placeHoldersCount (b64) {
+  var len = b64.length
+  if (len % 4 > 0) {
+    throw new Error('Invalid string. Length must be a multiple of 4')
+  }
+
+  // the number of equal signs (place holders)
+  // if there are two placeholders, than the two characters before it
+  // represent one byte
+  // if there is only one, then the three characters before it represent 2 bytes
+  // this is just a cheap hack to not do indexOf twice
+  return b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0
+}
+
+function byteLength (b64) {
+  // base64 is 4/3 + up to two characters of the original data
+  return b64.length * 3 / 4 - placeHoldersCount(b64)
+}
+
+function toByteArray (b64) {
+  var i, j, l, tmp, placeHolders, arr
+  var len = b64.length
+  placeHolders = placeHoldersCount(b64)
+
+  arr = new Arr(len * 3 / 4 - placeHolders)
+
+  // if there are placeholders, only get up to the last complete 4 chars
+  l = placeHolders > 0 ? len - 4 : len
+
+  var L = 0
+
+  for (i = 0, j = 0; i < l; i += 4, j += 3) {
+    tmp = (revLookup[b64.charCodeAt(i)] << 18) | (revLookup[b64.charCodeAt(i + 1)] << 12) | (revLookup[b64.charCodeAt(i + 2)] << 6) | revLookup[b64.charCodeAt(i + 3)]
+    arr[L++] = (tmp >> 16) & 0xFF
+    arr[L++] = (tmp >> 8) & 0xFF
+    arr[L++] = tmp & 0xFF
+  }
+
+  if (placeHolders === 2) {
+    tmp = (revLookup[b64.charCodeAt(i)] << 2) | (revLookup[b64.charCodeAt(i + 1)] >> 4)
+    arr[L++] = tmp & 0xFF
+  } else if (placeHolders === 1) {
+    tmp = (revLookup[b64.charCodeAt(i)] << 10) | (revLookup[b64.charCodeAt(i + 1)] << 4) | (revLookup[b64.charCodeAt(i + 2)] >> 2)
+    arr[L++] = (tmp >> 8) & 0xFF
+    arr[L++] = tmp & 0xFF
+  }
+
+  return arr
+}
+
+function tripletToBase64 (num) {
+  return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F]
+}
+
+function encodeChunk (uint8, start, end) {
+  var tmp
+  var output = []
+  for (var i = start; i < end; i += 3) {
+    tmp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
+    output.push(tripletToBase64(tmp))
+  }
+  return output.join('')
+}
+
+function fromByteArray (uint8) {
+  var tmp
+  var len = uint8.length
+  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
+  var output = ''
+  var parts = []
+  var maxChunkLength = 16383 // must be multiple of 3
+
+  // go through the array every three bytes, we'll deal with trailing stuff later
+  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
+    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
+  }
+
+  // pad the end with zeros, but make sure to not forget the extra bytes
+  if (extraBytes === 1) {
+    tmp = uint8[len - 1]
+    output += lookup[tmp >> 2]
+    output += lookup[(tmp << 4) & 0x3F]
+    output += '=='
+  } else if (extraBytes === 2) {
+    tmp = (uint8[len - 2] << 8) + (uint8[len - 1])
+    output += lookup[tmp >> 10]
+    output += lookup[(tmp >> 4) & 0x3F]
+    output += lookup[(tmp << 2) & 0x3F]
+    output += '='
+  }
+
+  parts.push(output)
+
+  return parts.join('')
+}
+
+
+/***/ }),
+/* 44 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(global) {/*!
+ * The buffer module from node.js, for the browser.
+ *
+ * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
+ * @license  MIT
+ */
+/* eslint-disable no-proto */
+
+
+
+var base64 = __webpack_require__(43)
+var ieee754 = __webpack_require__(58)
+var isArray = __webpack_require__(59)
+
+exports.Buffer = Buffer
+exports.SlowBuffer = SlowBuffer
+exports.INSPECT_MAX_BYTES = 50
+
+/**
+ * If `Buffer.TYPED_ARRAY_SUPPORT`:
+ *   === true    Use Uint8Array implementation (fastest)
+ *   === false   Use Object implementation (most compatible, even IE6)
+ *
+ * Browsers that support typed arrays are IE 10+, Firefox 4+, Chrome 7+, Safari 5.1+,
+ * Opera 11.6+, iOS 4.2+.
+ *
+ * Due to various browser bugs, sometimes the Object implementation will be used even
+ * when the browser supports typed arrays.
+ *
+ * Note:
+ *
+ *   - Firefox 4-29 lacks support for adding new properties to `Uint8Array` instances,
+ *     See: https://bugzilla.mozilla.org/show_bug.cgi?id=695438.
+ *
+ *   - Chrome 9-10 is missing the `TypedArray.prototype.subarray` function.
+ *
+ *   - IE10 has a broken `TypedArray.prototype.subarray` function which returns arrays of
+ *     incorrect length in some situations.
+
+ * We detect these buggy browsers and set `Buffer.TYPED_ARRAY_SUPPORT` to `false` so they
+ * get the Object implementation, which is slower but behaves correctly.
+ */
+Buffer.TYPED_ARRAY_SUPPORT = global.TYPED_ARRAY_SUPPORT !== undefined
+  ? global.TYPED_ARRAY_SUPPORT
+  : typedArraySupport()
+
+/*
+ * Export kMaxLength after typed array support is determined.
+ */
+exports.kMaxLength = kMaxLength()
+
+function typedArraySupport () {
+  try {
+    var arr = new Uint8Array(1)
+    arr.__proto__ = {__proto__: Uint8Array.prototype, foo: function () { return 42 }}
+    return arr.foo() === 42 && // typed array instances can be augmented
+        typeof arr.subarray === 'function' && // chrome 9-10 lack `subarray`
+        arr.subarray(1, 1).byteLength === 0 // ie10 has broken `subarray`
+  } catch (e) {
+    return false
+  }
+}
+
+function kMaxLength () {
+  return Buffer.TYPED_ARRAY_SUPPORT
+    ? 0x7fffffff
+    : 0x3fffffff
+}
+
+function createBuffer (that, length) {
+  if (kMaxLength() < length) {
+    throw new RangeError('Invalid typed array length')
+  }
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    // Return an augmented `Uint8Array` instance, for best performance
+    that = new Uint8Array(length)
+    that.__proto__ = Buffer.prototype
+  } else {
+    // Fallback: Return an object instance of the Buffer class
+    if (that === null) {
+      that = new Buffer(length)
+    }
+    that.length = length
+  }
+
+  return that
+}
+
+/**
+ * The Buffer constructor returns instances of `Uint8Array` that have their
+ * prototype changed to `Buffer.prototype`. Furthermore, `Buffer` is a subclass of
+ * `Uint8Array`, so the returned instances will have all the node `Buffer` methods
+ * and the `Uint8Array` methods. Square bracket notation works as expected -- it
+ * returns a single octet.
+ *
+ * The `Uint8Array` prototype remains unmodified.
+ */
+
+function Buffer (arg, encodingOrOffset, length) {
+  if (!Buffer.TYPED_ARRAY_SUPPORT && !(this instanceof Buffer)) {
+    return new Buffer(arg, encodingOrOffset, length)
+  }
+
+  // Common case.
+  if (typeof arg === 'number') {
+    if (typeof encodingOrOffset === 'string') {
+      throw new Error(
+        'If encoding is specified then the first argument must be a string'
+      )
+    }
+    return allocUnsafe(this, arg)
+  }
+  return from(this, arg, encodingOrOffset, length)
+}
+
+Buffer.poolSize = 8192 // not used by this implementation
+
+// TODO: Legacy, not needed anymore. Remove in next major version.
+Buffer._augment = function (arr) {
+  arr.__proto__ = Buffer.prototype
+  return arr
+}
+
+function from (that, value, encodingOrOffset, length) {
+  if (typeof value === 'number') {
+    throw new TypeError('"value" argument must not be a number')
+  }
+
+  if (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer) {
+    return fromArrayBuffer(that, value, encodingOrOffset, length)
+  }
+
+  if (typeof value === 'string') {
+    return fromString(that, value, encodingOrOffset)
+  }
+
+  return fromObject(that, value)
+}
+
+/**
+ * Functionally equivalent to Buffer(arg, encoding) but throws a TypeError
+ * if value is a number.
+ * Buffer.from(str[, encoding])
+ * Buffer.from(array)
+ * Buffer.from(buffer)
+ * Buffer.from(arrayBuffer[, byteOffset[, length]])
+ **/
+Buffer.from = function (value, encodingOrOffset, length) {
+  return from(null, value, encodingOrOffset, length)
+}
+
+if (Buffer.TYPED_ARRAY_SUPPORT) {
+  Buffer.prototype.__proto__ = Uint8Array.prototype
+  Buffer.__proto__ = Uint8Array
+  if (typeof Symbol !== 'undefined' && Symbol.species &&
+      Buffer[Symbol.species] === Buffer) {
+    // Fix subarray() in ES2016. See: https://github.com/feross/buffer/pull/97
+    Object.defineProperty(Buffer, Symbol.species, {
+      value: null,
+      configurable: true
+    })
+  }
+}
+
+function assertSize (size) {
+  if (typeof size !== 'number') {
+    throw new TypeError('"size" argument must be a number')
+  } else if (size < 0) {
+    throw new RangeError('"size" argument must not be negative')
+  }
+}
+
+function alloc (that, size, fill, encoding) {
+  assertSize(size)
+  if (size <= 0) {
+    return createBuffer(that, size)
+  }
+  if (fill !== undefined) {
+    // Only pay attention to encoding if it's a string. This
+    // prevents accidentally sending in a number that would
+    // be interpretted as a start offset.
+    return typeof encoding === 'string'
+      ? createBuffer(that, size).fill(fill, encoding)
+      : createBuffer(that, size).fill(fill)
+  }
+  return createBuffer(that, size)
+}
+
+/**
+ * Creates a new filled Buffer instance.
+ * alloc(size[, fill[, encoding]])
+ **/
+Buffer.alloc = function (size, fill, encoding) {
+  return alloc(null, size, fill, encoding)
+}
+
+function allocUnsafe (that, size) {
+  assertSize(size)
+  that = createBuffer(that, size < 0 ? 0 : checked(size) | 0)
+  if (!Buffer.TYPED_ARRAY_SUPPORT) {
+    for (var i = 0; i < size; ++i) {
+      that[i] = 0
+    }
+  }
+  return that
+}
+
+/**
+ * Equivalent to Buffer(num), by default creates a non-zero-filled Buffer instance.
+ * */
+Buffer.allocUnsafe = function (size) {
+  return allocUnsafe(null, size)
+}
+/**
+ * Equivalent to SlowBuffer(num), by default creates a non-zero-filled Buffer instance.
+ */
+Buffer.allocUnsafeSlow = function (size) {
+  return allocUnsafe(null, size)
+}
+
+function fromString (that, string, encoding) {
+  if (typeof encoding !== 'string' || encoding === '') {
+    encoding = 'utf8'
+  }
+
+  if (!Buffer.isEncoding(encoding)) {
+    throw new TypeError('"encoding" must be a valid string encoding')
+  }
+
+  var length = byteLength(string, encoding) | 0
+  that = createBuffer(that, length)
+
+  var actual = that.write(string, encoding)
+
+  if (actual !== length) {
+    // Writing a hex string, for example, that contains invalid characters will
+    // cause everything after the first invalid character to be ignored. (e.g.
+    // 'abxxcd' will be treated as 'ab')
+    that = that.slice(0, actual)
+  }
+
+  return that
+}
+
+function fromArrayLike (that, array) {
+  var length = array.length < 0 ? 0 : checked(array.length) | 0
+  that = createBuffer(that, length)
+  for (var i = 0; i < length; i += 1) {
+    that[i] = array[i] & 255
+  }
+  return that
+}
+
+function fromArrayBuffer (that, array, byteOffset, length) {
+  array.byteLength // this throws if `array` is not a valid ArrayBuffer
+
+  if (byteOffset < 0 || array.byteLength < byteOffset) {
+    throw new RangeError('\'offset\' is out of bounds')
+  }
+
+  if (array.byteLength < byteOffset + (length || 0)) {
+    throw new RangeError('\'length\' is out of bounds')
+  }
+
+  if (byteOffset === undefined && length === undefined) {
+    array = new Uint8Array(array)
+  } else if (length === undefined) {
+    array = new Uint8Array(array, byteOffset)
+  } else {
+    array = new Uint8Array(array, byteOffset, length)
+  }
+
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    // Return an augmented `Uint8Array` instance, for best performance
+    that = array
+    that.__proto__ = Buffer.prototype
+  } else {
+    // Fallback: Return an object instance of the Buffer class
+    that = fromArrayLike(that, array)
+  }
+  return that
+}
+
+function fromObject (that, obj) {
+  if (Buffer.isBuffer(obj)) {
+    var len = checked(obj.length) | 0
+    that = createBuffer(that, len)
+
+    if (that.length === 0) {
+      return that
+    }
+
+    obj.copy(that, 0, 0, len)
+    return that
+  }
+
+  if (obj) {
+    if ((typeof ArrayBuffer !== 'undefined' &&
+        obj.buffer instanceof ArrayBuffer) || 'length' in obj) {
+      if (typeof obj.length !== 'number' || isnan(obj.length)) {
+        return createBuffer(that, 0)
+      }
+      return fromArrayLike(that, obj)
+    }
+
+    if (obj.type === 'Buffer' && isArray(obj.data)) {
+      return fromArrayLike(that, obj.data)
+    }
+  }
+
+  throw new TypeError('First argument must be a string, Buffer, ArrayBuffer, Array, or array-like object.')
+}
+
+function checked (length) {
+  // Note: cannot use `length < kMaxLength()` here because that fails when
+  // length is NaN (which is otherwise coerced to zero.)
+  if (length >= kMaxLength()) {
+    throw new RangeError('Attempt to allocate Buffer larger than maximum ' +
+                         'size: 0x' + kMaxLength().toString(16) + ' bytes')
+  }
+  return length | 0
+}
+
+function SlowBuffer (length) {
+  if (+length != length) { // eslint-disable-line eqeqeq
+    length = 0
+  }
+  return Buffer.alloc(+length)
+}
+
+Buffer.isBuffer = function isBuffer (b) {
+  return !!(b != null && b._isBuffer)
+}
+
+Buffer.compare = function compare (a, b) {
+  if (!Buffer.isBuffer(a) || !Buffer.isBuffer(b)) {
+    throw new TypeError('Arguments must be Buffers')
+  }
+
+  if (a === b) return 0
+
+  var x = a.length
+  var y = b.length
+
+  for (var i = 0, len = Math.min(x, y); i < len; ++i) {
+    if (a[i] !== b[i]) {
+      x = a[i]
+      y = b[i]
+      break
+    }
+  }
+
+  if (x < y) return -1
+  if (y < x) return 1
+  return 0
+}
+
+Buffer.isEncoding = function isEncoding (encoding) {
+  switch (String(encoding).toLowerCase()) {
+    case 'hex':
+    case 'utf8':
+    case 'utf-8':
+    case 'ascii':
+    case 'latin1':
+    case 'binary':
+    case 'base64':
+    case 'ucs2':
+    case 'ucs-2':
+    case 'utf16le':
+    case 'utf-16le':
+      return true
+    default:
+      return false
+  }
+}
+
+Buffer.concat = function concat (list, length) {
+  if (!isArray(list)) {
+    throw new TypeError('"list" argument must be an Array of Buffers')
+  }
+
+  if (list.length === 0) {
+    return Buffer.alloc(0)
+  }
+
+  var i
+  if (length === undefined) {
+    length = 0
+    for (i = 0; i < list.length; ++i) {
+      length += list[i].length
+    }
+  }
+
+  var buffer = Buffer.allocUnsafe(length)
+  var pos = 0
+  for (i = 0; i < list.length; ++i) {
+    var buf = list[i]
+    if (!Buffer.isBuffer(buf)) {
+      throw new TypeError('"list" argument must be an Array of Buffers')
+    }
+    buf.copy(buffer, pos)
+    pos += buf.length
+  }
+  return buffer
+}
+
+function byteLength (string, encoding) {
+  if (Buffer.isBuffer(string)) {
+    return string.length
+  }
+  if (typeof ArrayBuffer !== 'undefined' && typeof ArrayBuffer.isView === 'function' &&
+      (ArrayBuffer.isView(string) || string instanceof ArrayBuffer)) {
+    return string.byteLength
+  }
+  if (typeof string !== 'string') {
+    string = '' + string
+  }
+
+  var len = string.length
+  if (len === 0) return 0
+
+  // Use a for loop to avoid recursion
+  var loweredCase = false
+  for (;;) {
+    switch (encoding) {
+      case 'ascii':
+      case 'latin1':
+      case 'binary':
+        return len
+      case 'utf8':
+      case 'utf-8':
+      case undefined:
+        return utf8ToBytes(string).length
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return len * 2
+      case 'hex':
+        return len >>> 1
+      case 'base64':
+        return base64ToBytes(string).length
+      default:
+        if (loweredCase) return utf8ToBytes(string).length // assume utf8
+        encoding = ('' + encoding).toLowerCase()
+        loweredCase = true
+    }
+  }
+}
+Buffer.byteLength = byteLength
+
+function slowToString (encoding, start, end) {
+  var loweredCase = false
+
+  // No need to verify that "this.length <= MAX_UINT32" since it's a read-only
+  // property of a typed array.
+
+  // This behaves neither like String nor Uint8Array in that we set start/end
+  // to their upper/lower bounds if the value passed is out of range.
+  // undefined is handled specially as per ECMA-262 6th Edition,
+  // Section 13.3.3.7 Runtime Semantics: KeyedBindingInitialization.
+  if (start === undefined || start < 0) {
+    start = 0
+  }
+  // Return early if start > this.length. Done here to prevent potential uint32
+  // coercion fail below.
+  if (start > this.length) {
+    return ''
+  }
+
+  if (end === undefined || end > this.length) {
+    end = this.length
+  }
+
+  if (end <= 0) {
+    return ''
+  }
+
+  // Force coersion to uint32. This will also coerce falsey/NaN values to 0.
+  end >>>= 0
+  start >>>= 0
+
+  if (end <= start) {
+    return ''
+  }
+
+  if (!encoding) encoding = 'utf8'
+
+  while (true) {
+    switch (encoding) {
+      case 'hex':
+        return hexSlice(this, start, end)
+
+      case 'utf8':
+      case 'utf-8':
+        return utf8Slice(this, start, end)
+
+      case 'ascii':
+        return asciiSlice(this, start, end)
+
+      case 'latin1':
+      case 'binary':
+        return latin1Slice(this, start, end)
+
+      case 'base64':
+        return base64Slice(this, start, end)
+
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return utf16leSlice(this, start, end)
+
+      default:
+        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
+        encoding = (encoding + '').toLowerCase()
+        loweredCase = true
+    }
+  }
+}
+
+// The property is used by `Buffer.isBuffer` and `is-buffer` (in Safari 5-7) to detect
+// Buffer instances.
+Buffer.prototype._isBuffer = true
+
+function swap (b, n, m) {
+  var i = b[n]
+  b[n] = b[m]
+  b[m] = i
+}
+
+Buffer.prototype.swap16 = function swap16 () {
+  var len = this.length
+  if (len % 2 !== 0) {
+    throw new RangeError('Buffer size must be a multiple of 16-bits')
+  }
+  for (var i = 0; i < len; i += 2) {
+    swap(this, i, i + 1)
+  }
+  return this
+}
+
+Buffer.prototype.swap32 = function swap32 () {
+  var len = this.length
+  if (len % 4 !== 0) {
+    throw new RangeError('Buffer size must be a multiple of 32-bits')
+  }
+  for (var i = 0; i < len; i += 4) {
+    swap(this, i, i + 3)
+    swap(this, i + 1, i + 2)
+  }
+  return this
+}
+
+Buffer.prototype.swap64 = function swap64 () {
+  var len = this.length
+  if (len % 8 !== 0) {
+    throw new RangeError('Buffer size must be a multiple of 64-bits')
+  }
+  for (var i = 0; i < len; i += 8) {
+    swap(this, i, i + 7)
+    swap(this, i + 1, i + 6)
+    swap(this, i + 2, i + 5)
+    swap(this, i + 3, i + 4)
+  }
+  return this
+}
+
+Buffer.prototype.toString = function toString () {
+  var length = this.length | 0
+  if (length === 0) return ''
+  if (arguments.length === 0) return utf8Slice(this, 0, length)
+  return slowToString.apply(this, arguments)
+}
+
+Buffer.prototype.equals = function equals (b) {
+  if (!Buffer.isBuffer(b)) throw new TypeError('Argument must be a Buffer')
+  if (this === b) return true
+  return Buffer.compare(this, b) === 0
+}
+
+Buffer.prototype.inspect = function inspect () {
+  var str = ''
+  var max = exports.INSPECT_MAX_BYTES
+  if (this.length > 0) {
+    str = this.toString('hex', 0, max).match(/.{2}/g).join(' ')
+    if (this.length > max) str += ' ... '
+  }
+  return '<Buffer ' + str + '>'
+}
+
+Buffer.prototype.compare = function compare (target, start, end, thisStart, thisEnd) {
+  if (!Buffer.isBuffer(target)) {
+    throw new TypeError('Argument must be a Buffer')
+  }
+
+  if (start === undefined) {
+    start = 0
+  }
+  if (end === undefined) {
+    end = target ? target.length : 0
+  }
+  if (thisStart === undefined) {
+    thisStart = 0
+  }
+  if (thisEnd === undefined) {
+    thisEnd = this.length
+  }
+
+  if (start < 0 || end > target.length || thisStart < 0 || thisEnd > this.length) {
+    throw new RangeError('out of range index')
+  }
+
+  if (thisStart >= thisEnd && start >= end) {
+    return 0
+  }
+  if (thisStart >= thisEnd) {
+    return -1
+  }
+  if (start >= end) {
+    return 1
+  }
+
+  start >>>= 0
+  end >>>= 0
+  thisStart >>>= 0
+  thisEnd >>>= 0
+
+  if (this === target) return 0
+
+  var x = thisEnd - thisStart
+  var y = end - start
+  var len = Math.min(x, y)
+
+  var thisCopy = this.slice(thisStart, thisEnd)
+  var targetCopy = target.slice(start, end)
+
+  for (var i = 0; i < len; ++i) {
+    if (thisCopy[i] !== targetCopy[i]) {
+      x = thisCopy[i]
+      y = targetCopy[i]
+      break
+    }
+  }
+
+  if (x < y) return -1
+  if (y < x) return 1
+  return 0
+}
+
+// Finds either the first index of `val` in `buffer` at offset >= `byteOffset`,
+// OR the last index of `val` in `buffer` at offset <= `byteOffset`.
+//
+// Arguments:
+// - buffer - a Buffer to search
+// - val - a string, Buffer, or number
+// - byteOffset - an index into `buffer`; will be clamped to an int32
+// - encoding - an optional encoding, relevant is val is a string
+// - dir - true for indexOf, false for lastIndexOf
+function bidirectionalIndexOf (buffer, val, byteOffset, encoding, dir) {
+  // Empty buffer means no match
+  if (buffer.length === 0) return -1
+
+  // Normalize byteOffset
+  if (typeof byteOffset === 'string') {
+    encoding = byteOffset
+    byteOffset = 0
+  } else if (byteOffset > 0x7fffffff) {
+    byteOffset = 0x7fffffff
+  } else if (byteOffset < -0x80000000) {
+    byteOffset = -0x80000000
+  }
+  byteOffset = +byteOffset  // Coerce to Number.
+  if (isNaN(byteOffset)) {
+    // byteOffset: it it's undefined, null, NaN, "foo", etc, search whole buffer
+    byteOffset = dir ? 0 : (buffer.length - 1)
+  }
+
+  // Normalize byteOffset: negative offsets start from the end of the buffer
+  if (byteOffset < 0) byteOffset = buffer.length + byteOffset
+  if (byteOffset >= buffer.length) {
+    if (dir) return -1
+    else byteOffset = buffer.length - 1
+  } else if (byteOffset < 0) {
+    if (dir) byteOffset = 0
+    else return -1
+  }
+
+  // Normalize val
+  if (typeof val === 'string') {
+    val = Buffer.from(val, encoding)
+  }
+
+  // Finally, search either indexOf (if dir is true) or lastIndexOf
+  if (Buffer.isBuffer(val)) {
+    // Special case: looking for empty string/buffer always fails
+    if (val.length === 0) {
+      return -1
+    }
+    return arrayIndexOf(buffer, val, byteOffset, encoding, dir)
+  } else if (typeof val === 'number') {
+    val = val & 0xFF // Search for a byte value [0-255]
+    if (Buffer.TYPED_ARRAY_SUPPORT &&
+        typeof Uint8Array.prototype.indexOf === 'function') {
+      if (dir) {
+        return Uint8Array.prototype.indexOf.call(buffer, val, byteOffset)
+      } else {
+        return Uint8Array.prototype.lastIndexOf.call(buffer, val, byteOffset)
+      }
+    }
+    return arrayIndexOf(buffer, [ val ], byteOffset, encoding, dir)
+  }
+
+  throw new TypeError('val must be string, number or Buffer')
+}
+
+function arrayIndexOf (arr, val, byteOffset, encoding, dir) {
+  var indexSize = 1
+  var arrLength = arr.length
+  var valLength = val.length
+
+  if (encoding !== undefined) {
+    encoding = String(encoding).toLowerCase()
+    if (encoding === 'ucs2' || encoding === 'ucs-2' ||
+        encoding === 'utf16le' || encoding === 'utf-16le') {
+      if (arr.length < 2 || val.length < 2) {
+        return -1
+      }
+      indexSize = 2
+      arrLength /= 2
+      valLength /= 2
+      byteOffset /= 2
+    }
+  }
+
+  function read (buf, i) {
+    if (indexSize === 1) {
+      return buf[i]
+    } else {
+      return buf.readUInt16BE(i * indexSize)
+    }
+  }
+
+  var i
+  if (dir) {
+    var foundIndex = -1
+    for (i = byteOffset; i < arrLength; i++) {
+      if (read(arr, i) === read(val, foundIndex === -1 ? 0 : i - foundIndex)) {
+        if (foundIndex === -1) foundIndex = i
+        if (i - foundIndex + 1 === valLength) return foundIndex * indexSize
+      } else {
+        if (foundIndex !== -1) i -= i - foundIndex
+        foundIndex = -1
+      }
+    }
+  } else {
+    if (byteOffset + valLength > arrLength) byteOffset = arrLength - valLength
+    for (i = byteOffset; i >= 0; i--) {
+      var found = true
+      for (var j = 0; j < valLength; j++) {
+        if (read(arr, i + j) !== read(val, j)) {
+          found = false
+          break
+        }
+      }
+      if (found) return i
+    }
+  }
+
+  return -1
+}
+
+Buffer.prototype.includes = function includes (val, byteOffset, encoding) {
+  return this.indexOf(val, byteOffset, encoding) !== -1
+}
+
+Buffer.prototype.indexOf = function indexOf (val, byteOffset, encoding) {
+  return bidirectionalIndexOf(this, val, byteOffset, encoding, true)
+}
+
+Buffer.prototype.lastIndexOf = function lastIndexOf (val, byteOffset, encoding) {
+  return bidirectionalIndexOf(this, val, byteOffset, encoding, false)
+}
+
+function hexWrite (buf, string, offset, length) {
+  offset = Number(offset) || 0
+  var remaining = buf.length - offset
+  if (!length) {
+    length = remaining
+  } else {
+    length = Number(length)
+    if (length > remaining) {
+      length = remaining
+    }
+  }
+
+  // must be an even number of digits
+  var strLen = string.length
+  if (strLen % 2 !== 0) throw new TypeError('Invalid hex string')
+
+  if (length > strLen / 2) {
+    length = strLen / 2
+  }
+  for (var i = 0; i < length; ++i) {
+    var parsed = parseInt(string.substr(i * 2, 2), 16)
+    if (isNaN(parsed)) return i
+    buf[offset + i] = parsed
+  }
+  return i
+}
+
+function utf8Write (buf, string, offset, length) {
+  return blitBuffer(utf8ToBytes(string, buf.length - offset), buf, offset, length)
+}
+
+function asciiWrite (buf, string, offset, length) {
+  return blitBuffer(asciiToBytes(string), buf, offset, length)
+}
+
+function latin1Write (buf, string, offset, length) {
+  return asciiWrite(buf, string, offset, length)
+}
+
+function base64Write (buf, string, offset, length) {
+  return blitBuffer(base64ToBytes(string), buf, offset, length)
+}
+
+function ucs2Write (buf, string, offset, length) {
+  return blitBuffer(utf16leToBytes(string, buf.length - offset), buf, offset, length)
+}
+
+Buffer.prototype.write = function write (string, offset, length, encoding) {
+  // Buffer#write(string)
+  if (offset === undefined) {
+    encoding = 'utf8'
+    length = this.length
+    offset = 0
+  // Buffer#write(string, encoding)
+  } else if (length === undefined && typeof offset === 'string') {
+    encoding = offset
+    length = this.length
+    offset = 0
+  // Buffer#write(string, offset[, length][, encoding])
+  } else if (isFinite(offset)) {
+    offset = offset | 0
+    if (isFinite(length)) {
+      length = length | 0
+      if (encoding === undefined) encoding = 'utf8'
+    } else {
+      encoding = length
+      length = undefined
+    }
+  // legacy write(string, encoding, offset, length) - remove in v0.13
+  } else {
+    throw new Error(
+      'Buffer.write(string, encoding, offset[, length]) is no longer supported'
+    )
+  }
+
+  var remaining = this.length - offset
+  if (length === undefined || length > remaining) length = remaining
+
+  if ((string.length > 0 && (length < 0 || offset < 0)) || offset > this.length) {
+    throw new RangeError('Attempt to write outside buffer bounds')
+  }
+
+  if (!encoding) encoding = 'utf8'
+
+  var loweredCase = false
+  for (;;) {
+    switch (encoding) {
+      case 'hex':
+        return hexWrite(this, string, offset, length)
+
+      case 'utf8':
+      case 'utf-8':
+        return utf8Write(this, string, offset, length)
+
+      case 'ascii':
+        return asciiWrite(this, string, offset, length)
+
+      case 'latin1':
+      case 'binary':
+        return latin1Write(this, string, offset, length)
+
+      case 'base64':
+        // Warning: maxLength not taken into account in base64Write
+        return base64Write(this, string, offset, length)
+
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return ucs2Write(this, string, offset, length)
+
+      default:
+        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
+        encoding = ('' + encoding).toLowerCase()
+        loweredCase = true
+    }
+  }
+}
+
+Buffer.prototype.toJSON = function toJSON () {
+  return {
+    type: 'Buffer',
+    data: Array.prototype.slice.call(this._arr || this, 0)
+  }
+}
+
+function base64Slice (buf, start, end) {
+  if (start === 0 && end === buf.length) {
+    return base64.fromByteArray(buf)
+  } else {
+    return base64.fromByteArray(buf.slice(start, end))
+  }
+}
+
+function utf8Slice (buf, start, end) {
+  end = Math.min(buf.length, end)
+  var res = []
+
+  var i = start
+  while (i < end) {
+    var firstByte = buf[i]
+    var codePoint = null
+    var bytesPerSequence = (firstByte > 0xEF) ? 4
+      : (firstByte > 0xDF) ? 3
+      : (firstByte > 0xBF) ? 2
+      : 1
+
+    if (i + bytesPerSequence <= end) {
+      var secondByte, thirdByte, fourthByte, tempCodePoint
+
+      switch (bytesPerSequence) {
+        case 1:
+          if (firstByte < 0x80) {
+            codePoint = firstByte
+          }
+          break
+        case 2:
+          secondByte = buf[i + 1]
+          if ((secondByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0x1F) << 0x6 | (secondByte & 0x3F)
+            if (tempCodePoint > 0x7F) {
+              codePoint = tempCodePoint
+            }
+          }
+          break
+        case 3:
+          secondByte = buf[i + 1]
+          thirdByte = buf[i + 2]
+          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0xF) << 0xC | (secondByte & 0x3F) << 0x6 | (thirdByte & 0x3F)
+            if (tempCodePoint > 0x7FF && (tempCodePoint < 0xD800 || tempCodePoint > 0xDFFF)) {
+              codePoint = tempCodePoint
+            }
+          }
+          break
+        case 4:
+          secondByte = buf[i + 1]
+          thirdByte = buf[i + 2]
+          fourthByte = buf[i + 3]
+          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80 && (fourthByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0xF) << 0x12 | (secondByte & 0x3F) << 0xC | (thirdByte & 0x3F) << 0x6 | (fourthByte & 0x3F)
+            if (tempCodePoint > 0xFFFF && tempCodePoint < 0x110000) {
+              codePoint = tempCodePoint
+            }
+          }
+      }
+    }
+
+    if (codePoint === null) {
+      // we did not generate a valid codePoint so insert a
+      // replacement char (U+FFFD) and advance only 1 byte
+      codePoint = 0xFFFD
+      bytesPerSequence = 1
+    } else if (codePoint > 0xFFFF) {
+      // encode to utf16 (surrogate pair dance)
+      codePoint -= 0x10000
+      res.push(codePoint >>> 10 & 0x3FF | 0xD800)
+      codePoint = 0xDC00 | codePoint & 0x3FF
+    }
+
+    res.push(codePoint)
+    i += bytesPerSequence
+  }
+
+  return decodeCodePointsArray(res)
+}
+
+// Based on http://stackoverflow.com/a/22747272/680742, the browser with
+// the lowest limit is Chrome, with 0x10000 args.
+// We go 1 magnitude less, for safety
+var MAX_ARGUMENTS_LENGTH = 0x1000
+
+function decodeCodePointsArray (codePoints) {
+  var len = codePoints.length
+  if (len <= MAX_ARGUMENTS_LENGTH) {
+    return String.fromCharCode.apply(String, codePoints) // avoid extra slice()
+  }
+
+  // Decode in chunks to avoid "call stack size exceeded".
+  var res = ''
+  var i = 0
+  while (i < len) {
+    res += String.fromCharCode.apply(
+      String,
+      codePoints.slice(i, i += MAX_ARGUMENTS_LENGTH)
+    )
+  }
+  return res
+}
+
+function asciiSlice (buf, start, end) {
+  var ret = ''
+  end = Math.min(buf.length, end)
+
+  for (var i = start; i < end; ++i) {
+    ret += String.fromCharCode(buf[i] & 0x7F)
+  }
+  return ret
+}
+
+function latin1Slice (buf, start, end) {
+  var ret = ''
+  end = Math.min(buf.length, end)
+
+  for (var i = start; i < end; ++i) {
+    ret += String.fromCharCode(buf[i])
+  }
+  return ret
+}
+
+function hexSlice (buf, start, end) {
+  var len = buf.length
+
+  if (!start || start < 0) start = 0
+  if (!end || end < 0 || end > len) end = len
+
+  var out = ''
+  for (var i = start; i < end; ++i) {
+    out += toHex(buf[i])
+  }
+  return out
+}
+
+function utf16leSlice (buf, start, end) {
+  var bytes = buf.slice(start, end)
+  var res = ''
+  for (var i = 0; i < bytes.length; i += 2) {
+    res += String.fromCharCode(bytes[i] + bytes[i + 1] * 256)
+  }
+  return res
+}
+
+Buffer.prototype.slice = function slice (start, end) {
+  var len = this.length
+  start = ~~start
+  end = end === undefined ? len : ~~end
+
+  if (start < 0) {
+    start += len
+    if (start < 0) start = 0
+  } else if (start > len) {
+    start = len
+  }
+
+  if (end < 0) {
+    end += len
+    if (end < 0) end = 0
+  } else if (end > len) {
+    end = len
+  }
+
+  if (end < start) end = start
+
+  var newBuf
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    newBuf = this.subarray(start, end)
+    newBuf.__proto__ = Buffer.prototype
+  } else {
+    var sliceLen = end - start
+    newBuf = new Buffer(sliceLen, undefined)
+    for (var i = 0; i < sliceLen; ++i) {
+      newBuf[i] = this[i + start]
+    }
+  }
+
+  return newBuf
+}
+
+/*
+ * Need to make sure that buffer isn't trying to write out of bounds.
+ */
+function checkOffset (offset, ext, length) {
+  if ((offset % 1) !== 0 || offset < 0) throw new RangeError('offset is not uint')
+  if (offset + ext > length) throw new RangeError('Trying to access beyond buffer length')
+}
+
+Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+  var val = this[offset]
+  var mul = 1
+  var i = 0
+  while (++i < byteLength && (mul *= 0x100)) {
+    val += this[offset + i] * mul
+  }
+
+  return val
+}
+
+Buffer.prototype.readUIntBE = function readUIntBE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) {
+    checkOffset(offset, byteLength, this.length)
+  }
+
+  var val = this[offset + --byteLength]
+  var mul = 1
+  while (byteLength > 0 && (mul *= 0x100)) {
+    val += this[offset + --byteLength] * mul
+  }
+
+  return val
+}
+
+Buffer.prototype.readUInt8 = function readUInt8 (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 1, this.length)
+  return this[offset]
+}
+
+Buffer.prototype.readUInt16LE = function readUInt16LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  return this[offset] | (this[offset + 1] << 8)
+}
+
+Buffer.prototype.readUInt16BE = function readUInt16BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  return (this[offset] << 8) | this[offset + 1]
+}
+
+Buffer.prototype.readUInt32LE = function readUInt32LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return ((this[offset]) |
+      (this[offset + 1] << 8) |
+      (this[offset + 2] << 16)) +
+      (this[offset + 3] * 0x1000000)
+}
+
+Buffer.prototype.readUInt32BE = function readUInt32BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return (this[offset] * 0x1000000) +
+    ((this[offset + 1] << 16) |
+    (this[offset + 2] << 8) |
+    this[offset + 3])
+}
+
+Buffer.prototype.readIntLE = function readIntLE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+  var val = this[offset]
+  var mul = 1
+  var i = 0
+  while (++i < byteLength && (mul *= 0x100)) {
+    val += this[offset + i] * mul
+  }
+  mul *= 0x80
+
+  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
+
+  return val
+}
+
+Buffer.prototype.readIntBE = function readIntBE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+  var i = byteLength
+  var mul = 1
+  var val = this[offset + --i]
+  while (i > 0 && (mul *= 0x100)) {
+    val += this[offset + --i] * mul
+  }
+  mul *= 0x80
+
+  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
+
+  return val
+}
+
+Buffer.prototype.readInt8 = function readInt8 (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 1, this.length)
+  if (!(this[offset] & 0x80)) return (this[offset])
+  return ((0xff - this[offset] + 1) * -1)
+}
+
+Buffer.prototype.readInt16LE = function readInt16LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  var val = this[offset] | (this[offset + 1] << 8)
+  return (val & 0x8000) ? val | 0xFFFF0000 : val
+}
+
+Buffer.prototype.readInt16BE = function readInt16BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  var val = this[offset + 1] | (this[offset] << 8)
+  return (val & 0x8000) ? val | 0xFFFF0000 : val
+}
+
+Buffer.prototype.readInt32LE = function readInt32LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return (this[offset]) |
+    (this[offset + 1] << 8) |
+    (this[offset + 2] << 16) |
+    (this[offset + 3] << 24)
+}
+
+Buffer.prototype.readInt32BE = function readInt32BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return (this[offset] << 24) |
+    (this[offset + 1] << 16) |
+    (this[offset + 2] << 8) |
+    (this[offset + 3])
+}
+
+Buffer.prototype.readFloatLE = function readFloatLE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+  return ieee754.read(this, offset, true, 23, 4)
+}
+
+Buffer.prototype.readFloatBE = function readFloatBE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+  return ieee754.read(this, offset, false, 23, 4)
+}
+
+Buffer.prototype.readDoubleLE = function readDoubleLE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 8, this.length)
+  return ieee754.read(this, offset, true, 52, 8)
+}
+
+Buffer.prototype.readDoubleBE = function readDoubleBE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 8, this.length)
+  return ieee754.read(this, offset, false, 52, 8)
+}
+
+function checkInt (buf, value, offset, ext, max, min) {
+  if (!Buffer.isBuffer(buf)) throw new TypeError('"buffer" argument must be a Buffer instance')
+  if (value > max || value < min) throw new RangeError('"value" argument is out of bounds')
+  if (offset + ext > buf.length) throw new RangeError('Index out of range')
+}
+
+Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) {
+    var maxBytes = Math.pow(2, 8 * byteLength) - 1
+    checkInt(this, value, offset, byteLength, maxBytes, 0)
+  }
+
+  var mul = 1
+  var i = 0
+  this[offset] = value & 0xFF
+  while (++i < byteLength && (mul *= 0x100)) {
+    this[offset + i] = (value / mul) & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) {
+    var maxBytes = Math.pow(2, 8 * byteLength) - 1
+    checkInt(this, value, offset, byteLength, maxBytes, 0)
+  }
+
+  var i = byteLength - 1
+  var mul = 1
+  this[offset + i] = value & 0xFF
+  while (--i >= 0 && (mul *= 0x100)) {
+    this[offset + i] = (value / mul) & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeUInt8 = function writeUInt8 (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 1, 0xff, 0)
+  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
+  this[offset] = (value & 0xff)
+  return offset + 1
+}
+
+function objectWriteUInt16 (buf, value, offset, littleEndian) {
+  if (value < 0) value = 0xffff + value + 1
+  for (var i = 0, j = Math.min(buf.length - offset, 2); i < j; ++i) {
+    buf[offset + i] = (value & (0xff << (8 * (littleEndian ? i : 1 - i)))) >>>
+      (littleEndian ? i : 1 - i) * 8
+  }
+}
+
+Buffer.prototype.writeUInt16LE = function writeUInt16LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value & 0xff)
+    this[offset + 1] = (value >>> 8)
+  } else {
+    objectWriteUInt16(this, value, offset, true)
+  }
+  return offset + 2
+}
+
+Buffer.prototype.writeUInt16BE = function writeUInt16BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 8)
+    this[offset + 1] = (value & 0xff)
+  } else {
+    objectWriteUInt16(this, value, offset, false)
+  }
+  return offset + 2
+}
+
+function objectWriteUInt32 (buf, value, offset, littleEndian) {
+  if (value < 0) value = 0xffffffff + value + 1
+  for (var i = 0, j = Math.min(buf.length - offset, 4); i < j; ++i) {
+    buf[offset + i] = (value >>> (littleEndian ? i : 3 - i) * 8) & 0xff
+  }
+}
+
+Buffer.prototype.writeUInt32LE = function writeUInt32LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset + 3] = (value >>> 24)
+    this[offset + 2] = (value >>> 16)
+    this[offset + 1] = (value >>> 8)
+    this[offset] = (value & 0xff)
+  } else {
+    objectWriteUInt32(this, value, offset, true)
+  }
+  return offset + 4
+}
+
+Buffer.prototype.writeUInt32BE = function writeUInt32BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 24)
+    this[offset + 1] = (value >>> 16)
+    this[offset + 2] = (value >>> 8)
+    this[offset + 3] = (value & 0xff)
+  } else {
+    objectWriteUInt32(this, value, offset, false)
+  }
+  return offset + 4
+}
+
+Buffer.prototype.writeIntLE = function writeIntLE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) {
+    var limit = Math.pow(2, 8 * byteLength - 1)
+
+    checkInt(this, value, offset, byteLength, limit - 1, -limit)
+  }
+
+  var i = 0
+  var mul = 1
+  var sub = 0
+  this[offset] = value & 0xFF
+  while (++i < byteLength && (mul *= 0x100)) {
+    if (value < 0 && sub === 0 && this[offset + i - 1] !== 0) {
+      sub = 1
+    }
+    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeIntBE = function writeIntBE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) {
+    var limit = Math.pow(2, 8 * byteLength - 1)
+
+    checkInt(this, value, offset, byteLength, limit - 1, -limit)
+  }
+
+  var i = byteLength - 1
+  var mul = 1
+  var sub = 0
+  this[offset + i] = value & 0xFF
+  while (--i >= 0 && (mul *= 0x100)) {
+    if (value < 0 && sub === 0 && this[offset + i + 1] !== 0) {
+      sub = 1
+    }
+    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeInt8 = function writeInt8 (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 1, 0x7f, -0x80)
+  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
+  if (value < 0) value = 0xff + value + 1
+  this[offset] = (value & 0xff)
+  return offset + 1
+}
+
+Buffer.prototype.writeInt16LE = function writeInt16LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value & 0xff)
+    this[offset + 1] = (value >>> 8)
+  } else {
+    objectWriteUInt16(this, value, offset, true)
+  }
+  return offset + 2
+}
+
+Buffer.prototype.writeInt16BE = function writeInt16BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 8)
+    this[offset + 1] = (value & 0xff)
+  } else {
+    objectWriteUInt16(this, value, offset, false)
+  }
+  return offset + 2
+}
+
+Buffer.prototype.writeInt32LE = function writeInt32LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value & 0xff)
+    this[offset + 1] = (value >>> 8)
+    this[offset + 2] = (value >>> 16)
+    this[offset + 3] = (value >>> 24)
+  } else {
+    objectWriteUInt32(this, value, offset, true)
+  }
+  return offset + 4
+}
+
+Buffer.prototype.writeInt32BE = function writeInt32BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
+  if (value < 0) value = 0xffffffff + value + 1
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 24)
+    this[offset + 1] = (value >>> 16)
+    this[offset + 2] = (value >>> 8)
+    this[offset + 3] = (value & 0xff)
+  } else {
+    objectWriteUInt32(this, value, offset, false)
+  }
+  return offset + 4
+}
+
+function checkIEEE754 (buf, value, offset, ext, max, min) {
+  if (offset + ext > buf.length) throw new RangeError('Index out of range')
+  if (offset < 0) throw new RangeError('Index out of range')
+}
+
+function writeFloat (buf, value, offset, littleEndian, noAssert) {
+  if (!noAssert) {
+    checkIEEE754(buf, value, offset, 4, 3.4028234663852886e+38, -3.4028234663852886e+38)
+  }
+  ieee754.write(buf, value, offset, littleEndian, 23, 4)
+  return offset + 4
+}
+
+Buffer.prototype.writeFloatLE = function writeFloatLE (value, offset, noAssert) {
+  return writeFloat(this, value, offset, true, noAssert)
+}
+
+Buffer.prototype.writeFloatBE = function writeFloatBE (value, offset, noAssert) {
+  return writeFloat(this, value, offset, false, noAssert)
+}
+
+function writeDouble (buf, value, offset, littleEndian, noAssert) {
+  if (!noAssert) {
+    checkIEEE754(buf, value, offset, 8, 1.7976931348623157E+308, -1.7976931348623157E+308)
+  }
+  ieee754.write(buf, value, offset, littleEndian, 52, 8)
+  return offset + 8
+}
+
+Buffer.prototype.writeDoubleLE = function writeDoubleLE (value, offset, noAssert) {
+  return writeDouble(this, value, offset, true, noAssert)
+}
+
+Buffer.prototype.writeDoubleBE = function writeDoubleBE (value, offset, noAssert) {
+  return writeDouble(this, value, offset, false, noAssert)
+}
+
+// copy(targetBuffer, targetStart=0, sourceStart=0, sourceEnd=buffer.length)
+Buffer.prototype.copy = function copy (target, targetStart, start, end) {
+  if (!start) start = 0
+  if (!end && end !== 0) end = this.length
+  if (targetStart >= target.length) targetStart = target.length
+  if (!targetStart) targetStart = 0
+  if (end > 0 && end < start) end = start
+
+  // Copy 0 bytes; we're done
+  if (end === start) return 0
+  if (target.length === 0 || this.length === 0) return 0
+
+  // Fatal error conditions
+  if (targetStart < 0) {
+    throw new RangeError('targetStart out of bounds')
+  }
+  if (start < 0 || start >= this.length) throw new RangeError('sourceStart out of bounds')
+  if (end < 0) throw new RangeError('sourceEnd out of bounds')
+
+  // Are we oob?
+  if (end > this.length) end = this.length
+  if (target.length - targetStart < end - start) {
+    end = target.length - targetStart + start
+  }
+
+  var len = end - start
+  var i
+
+  if (this === target && start < targetStart && targetStart < end) {
+    // descending copy from end
+    for (i = len - 1; i >= 0; --i) {
+      target[i + targetStart] = this[i + start]
+    }
+  } else if (len < 1000 || !Buffer.TYPED_ARRAY_SUPPORT) {
+    // ascending copy from start
+    for (i = 0; i < len; ++i) {
+      target[i + targetStart] = this[i + start]
+    }
+  } else {
+    Uint8Array.prototype.set.call(
+      target,
+      this.subarray(start, start + len),
+      targetStart
+    )
+  }
+
+  return len
+}
+
+// Usage:
+//    buffer.fill(number[, offset[, end]])
+//    buffer.fill(buffer[, offset[, end]])
+//    buffer.fill(string[, offset[, end]][, encoding])
+Buffer.prototype.fill = function fill (val, start, end, encoding) {
+  // Handle string cases:
+  if (typeof val === 'string') {
+    if (typeof start === 'string') {
+      encoding = start
+      start = 0
+      end = this.length
+    } else if (typeof end === 'string') {
+      encoding = end
+      end = this.length
+    }
+    if (val.length === 1) {
+      var code = val.charCodeAt(0)
+      if (code < 256) {
+        val = code
+      }
+    }
+    if (encoding !== undefined && typeof encoding !== 'string') {
+      throw new TypeError('encoding must be a string')
+    }
+    if (typeof encoding === 'string' && !Buffer.isEncoding(encoding)) {
+      throw new TypeError('Unknown encoding: ' + encoding)
+    }
+  } else if (typeof val === 'number') {
+    val = val & 255
+  }
+
+  // Invalid ranges are not set to a default, so can range check early.
+  if (start < 0 || this.length < start || this.length < end) {
+    throw new RangeError('Out of range index')
+  }
+
+  if (end <= start) {
+    return this
+  }
+
+  start = start >>> 0
+  end = end === undefined ? this.length : end >>> 0
+
+  if (!val) val = 0
+
+  var i
+  if (typeof val === 'number') {
+    for (i = start; i < end; ++i) {
+      this[i] = val
+    }
+  } else {
+    var bytes = Buffer.isBuffer(val)
+      ? val
+      : utf8ToBytes(new Buffer(val, encoding).toString())
+    var len = bytes.length
+    for (i = 0; i < end - start; ++i) {
+      this[i + start] = bytes[i % len]
+    }
+  }
+
+  return this
+}
+
+// HELPER FUNCTIONS
+// ================
+
+var INVALID_BASE64_RE = /[^+\/0-9A-Za-z-_]/g
+
+function base64clean (str) {
+  // Node strips out invalid characters like \n and \t from the string, base64-js does not
+  str = stringtrim(str).replace(INVALID_BASE64_RE, '')
+  // Node converts strings with length < 2 to ''
+  if (str.length < 2) return ''
+  // Node allows for non-padded base64 strings (missing trailing ===), base64-js does not
+  while (str.length % 4 !== 0) {
+    str = str + '='
+  }
+  return str
+}
+
+function stringtrim (str) {
+  if (str.trim) return str.trim()
+  return str.replace(/^\s+|\s+$/g, '')
+}
+
+function toHex (n) {
+  if (n < 16) return '0' + n.toString(16)
+  return n.toString(16)
+}
+
+function utf8ToBytes (string, units) {
+  units = units || Infinity
+  var codePoint
+  var length = string.length
+  var leadSurrogate = null
+  var bytes = []
+
+  for (var i = 0; i < length; ++i) {
+    codePoint = string.charCodeAt(i)
+
+    // is surrogate component
+    if (codePoint > 0xD7FF && codePoint < 0xE000) {
+      // last char was a lead
+      if (!leadSurrogate) {
+        // no lead yet
+        if (codePoint > 0xDBFF) {
+          // unexpected trail
+          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+          continue
+        } else if (i + 1 === length) {
+          // unpaired lead
+          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+          continue
+        }
+
+        // valid lead
+        leadSurrogate = codePoint
+
+        continue
+      }
+
+      // 2 leads in a row
+      if (codePoint < 0xDC00) {
+        if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+        leadSurrogate = codePoint
+        continue
+      }
+
+      // valid surrogate pair
+      codePoint = (leadSurrogate - 0xD800 << 10 | codePoint - 0xDC00) + 0x10000
+    } else if (leadSurrogate) {
+      // valid bmp char, but last char was a lead
+      if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+    }
+
+    leadSurrogate = null
+
+    // encode utf8
+    if (codePoint < 0x80) {
+      if ((units -= 1) < 0) break
+      bytes.push(codePoint)
+    } else if (codePoint < 0x800) {
+      if ((units -= 2) < 0) break
+      bytes.push(
+        codePoint >> 0x6 | 0xC0,
+        codePoint & 0x3F | 0x80
+      )
+    } else if (codePoint < 0x10000) {
+      if ((units -= 3) < 0) break
+      bytes.push(
+        codePoint >> 0xC | 0xE0,
+        codePoint >> 0x6 & 0x3F | 0x80,
+        codePoint & 0x3F | 0x80
+      )
+    } else if (codePoint < 0x110000) {
+      if ((units -= 4) < 0) break
+      bytes.push(
+        codePoint >> 0x12 | 0xF0,
+        codePoint >> 0xC & 0x3F | 0x80,
+        codePoint >> 0x6 & 0x3F | 0x80,
+        codePoint & 0x3F | 0x80
+      )
+    } else {
+      throw new Error('Invalid code point')
+    }
+  }
+
+  return bytes
+}
+
+function asciiToBytes (str) {
+  var byteArray = []
+  for (var i = 0; i < str.length; ++i) {
+    // Node's code seems to be doing this and not & 0x7F..
+    byteArray.push(str.charCodeAt(i) & 0xFF)
+  }
+  return byteArray
+}
+
+function utf16leToBytes (str, units) {
+  var c, hi, lo
+  var byteArray = []
+  for (var i = 0; i < str.length; ++i) {
+    if ((units -= 2) < 0) break
+
+    c = str.charCodeAt(i)
+    hi = c >> 8
+    lo = c % 256
+    byteArray.push(lo)
+    byteArray.push(hi)
+  }
+
+  return byteArray
+}
+
+function base64ToBytes (str) {
+  return base64.toByteArray(base64clean(str))
+}
+
+function blitBuffer (src, dst, offset, length) {
+  for (var i = 0; i < length; ++i) {
+    if ((i + offset >= dst.length) || (i >= src.length)) break
+    dst[i + offset] = src[i]
+  }
+  return i
+}
+
+function isnan (val) {
+  return val !== val // eslint-disable-line no-self-compare
+}
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(14)))
+
+/***/ }),
+/* 45 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(55);
+var $Object = __webpack_require__(10).Object;
+module.exports = function defineProperty(it, key, desc){
+  return $Object.defineProperty(it, key, desc);
+};
+
+/***/ }),
+/* 46 */
+/***/ (function(module, exports) {
+
+module.exports = function(it){
+  if(typeof it != 'function')throw TypeError(it + ' is not a function!');
+  return it;
+};
+
+/***/ }),
+/* 47 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var isObject = __webpack_require__(3);
+module.exports = function(it){
+  if(!isObject(it))throw TypeError(it + ' is not an object!');
+  return it;
+};
+
+/***/ }),
+/* 48 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// optional / simple context binding
+var aFunction = __webpack_require__(46);
+module.exports = function(fn, that, length){
+  aFunction(fn);
+  if(that === undefined)return fn;
+  switch(length){
+    case 1: return function(a){
+      return fn.call(that, a);
+    };
+    case 2: return function(a, b){
+      return fn.call(that, a, b);
+    };
+    case 3: return function(a, b, c){
+      return fn.call(that, a, b, c);
+    };
+  }
+  return function(/* ...args */){
+    return fn.apply(that, arguments);
+  };
+};
+
+/***/ }),
+/* 49 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var isObject = __webpack_require__(3)
+  , document = __webpack_require__(12).document
+  // in old IE typeof document.createElement is 'object'
+  , is = isObject(document) && isObject(document.createElement);
+module.exports = function(it){
+  return is ? document.createElement(it) : {};
+};
+
+/***/ }),
+/* 50 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var global    = __webpack_require__(12)
+  , core      = __webpack_require__(10)
+  , ctx       = __webpack_require__(48)
+  , hide      = __webpack_require__(51)
+  , PROTOTYPE = 'prototype';
+
+var $export = function(type, name, source){
+  var IS_FORCED = type & $export.F
+    , IS_GLOBAL = type & $export.G
+    , IS_STATIC = type & $export.S
+    , IS_PROTO  = type & $export.P
+    , IS_BIND   = type & $export.B
+    , IS_WRAP   = type & $export.W
+    , exports   = IS_GLOBAL ? core : core[name] || (core[name] = {})
+    , expProto  = exports[PROTOTYPE]
+    , target    = IS_GLOBAL ? global : IS_STATIC ? global[name] : (global[name] || {})[PROTOTYPE]
+    , key, own, out;
+  if(IS_GLOBAL)source = name;
+  for(key in source){
+    // contains in native
+    own = !IS_FORCED && target && target[key] !== undefined;
+    if(own && key in exports)continue;
+    // export native or passed
+    out = own ? target[key] : source[key];
+    // prevent global pollution for namespaces
+    exports[key] = IS_GLOBAL && typeof target[key] != 'function' ? source[key]
+    // bind timers to global for call from export context
+    : IS_BIND && own ? ctx(out, global)
+    // wrap global constructors for prevent change them in library
+    : IS_WRAP && target[key] == out ? (function(C){
+      var F = function(a, b, c){
+        if(this instanceof C){
+          switch(arguments.length){
+            case 0: return new C;
+            case 1: return new C(a);
+            case 2: return new C(a, b);
+          } return new C(a, b, c);
+        } return C.apply(this, arguments);
+      };
+      F[PROTOTYPE] = C[PROTOTYPE];
+      return F;
+    // make static versions for prototype methods
+    })(out) : IS_PROTO && typeof out == 'function' ? ctx(Function.call, out) : out;
+    // export proto methods to core.%CONSTRUCTOR%.methods.%NAME%
+    if(IS_PROTO){
+      (exports.virtual || (exports.virtual = {}))[key] = out;
+      // export proto methods to core.%CONSTRUCTOR%.prototype.%NAME%
+      if(type & $export.R && expProto && !expProto[key])hide(expProto, key, out);
+    }
+  }
+};
+// type bitmap
+$export.F = 1;   // forced
+$export.G = 2;   // global
+$export.S = 4;   // static
+$export.P = 8;   // proto
+$export.B = 16;  // bind
+$export.W = 32;  // wrap
+$export.U = 64;  // safe
+$export.R = 128; // real proto method for `library` 
+module.exports = $export;
+
+/***/ }),
+/* 51 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var dP         = __webpack_require__(13)
+  , createDesc = __webpack_require__(53);
+module.exports = __webpack_require__(1) ? function(object, key, value){
+  return dP.f(object, key, createDesc(1, value));
+} : function(object, key, value){
+  object[key] = value;
+  return object;
+};
+
+/***/ }),
+/* 52 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = !__webpack_require__(1) && !__webpack_require__(11)(function(){
+  return Object.defineProperty(__webpack_require__(49)('div'), 'a', {get: function(){ return 7; }}).a != 7;
+});
+
+/***/ }),
+/* 53 */
+/***/ (function(module, exports) {
+
+module.exports = function(bitmap, value){
+  return {
+    enumerable  : !(bitmap & 1),
+    configurable: !(bitmap & 2),
+    writable    : !(bitmap & 4),
+    value       : value
+  };
+};
+
+/***/ }),
+/* 54 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// 7.1.1 ToPrimitive(input [, PreferredType])
+var isObject = __webpack_require__(3);
+// instead of the ES6 spec version, we didn't implement @@toPrimitive case
+// and the second argument - flag - preferred type is a string
+module.exports = function(it, S){
+  if(!isObject(it))return it;
+  var fn, val;
+  if(S && typeof (fn = it.toString) == 'function' && !isObject(val = fn.call(it)))return val;
+  if(typeof (fn = it.valueOf) == 'function' && !isObject(val = fn.call(it)))return val;
+  if(!S && typeof (fn = it.toString) == 'function' && !isObject(val = fn.call(it)))return val;
+  throw TypeError("Can't convert object to primitive value");
+};
+
+/***/ }),
+/* 55 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var $export = __webpack_require__(50);
+// 19.1.2.4 / 15.2.3.6 Object.defineProperty(O, P, Attributes)
+$export($export.S + $export.F * !__webpack_require__(1), 'Object', {defineProperty: __webpack_require__(13).f});
+
+/***/ }),
+/* 56 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(57)(undefined);
+// imports
+exports.push([module.i, "@import url(https://fonts.googleapis.com/css?family=Roboto);", ""]);
+
+// module
+exports.push([module.i, "\n/*! normalize.css v6.0.0 | MIT License | github.com/necolas/normalize.css */\n/* Document\n   ========================================================================== */\n/**\n * 1. Correct the line height in all browsers.\n * 2. Prevent adjustments of font size after orientation changes in\n *    IE on Windows Phone and in iOS.\n */\nhtml{\r\n    line-height: 1.15;\n    /* 1 */\r\n    -ms-text-size-adjust: 100%;\n    /* 2 */\r\n    -webkit-text-size-adjust: 100%;\n    /* 2 */\n}\n/* Sections\n   ========================================================================== */\n/**\n * Add the correct display in IE 9-.\n */\narticle, aside, footer, header, nav, section{\r\n    display: block;\n}\n/**\n * Correct the font size and margin on `h1` elements within `section` and\n * `article` contexts in Chrome, Firefox, and Safari.\n */\nh1{\r\n    font-size: 2em;\r\n    margin: 0.67em 0;\n}\n/* Grouping content\n   ========================================================================== */\n/**\n * Add the correct display in IE 9-.\n * 1. Add the correct display in IE.\n */\nfigcaption, figure, main{\n    /* 1 */\r\n    display: block;\n}\n/**\n * Add the correct margin in IE 8.\n */\nfigure{\r\n    margin: 1em 40px;\n}\n/**\n * 1. Add the correct box sizing in Firefox.\n * 2. Show the overflow in Edge and IE.\n */\nhr{\r\n    box-sizing: content-box;\n    /* 1 */\r\n    height: 0;\n    /* 1 */\r\n    overflow: visible;\n    /* 2 */\n}\n/**\n * 1. Correct the inheritance and scaling of font size in all browsers.\n * 2. Correct the odd `em` font sizing in all browsers.\n */\npre{\r\n    font-family: monospace, monospace;\n    /* 1 */\r\n    font-size: 1em;\n    /* 2 */\n}\n/* Text-level semantics\n   ========================================================================== */\n/**\n * 1. Remove the gray background on active links in IE 10.\n * 2. Remove gaps in links underline in iOS 8+ and Safari 8+.\n */\na{\r\n    background-color: transparent;\n    /* 1 */\r\n    -webkit-text-decoration-skip: objects;\n    /* 2 */\n}\n/**\n * 1. Remove the bottom border in Chrome 57- and Firefox 39-.\n * 2. Add the correct text decoration in Chrome, Edge, IE, Opera, and Safari.\n */\nabbr[title]{\r\n    border-bottom: none;\n    /* 1 */\r\n    text-decoration: underline;\n    /* 2 */\r\n    text-decoration: underline dotted;\n    /* 2 */\n}\n/**\n * Prevent the duplicate application of `bolder` by the next rule in Safari 6.\n */\nb, strong{\r\n    font-weight: inherit;\n}\n/**\n * Add the correct font weight in Chrome, Edge, and Safari.\n */\nb, strong{\r\n    font-weight: bolder;\n}\n/**\n * 1. Correct the inheritance and scaling of font size in all browsers.\n * 2. Correct the odd `em` font sizing in all browsers.\n */\ncode, kbd, samp{\r\n    font-family: monospace, monospace;\n    /* 1 */\r\n    font-size: 1em;\n    /* 2 */\n}\n/**\n * Add the correct font style in Android 4.3-.\n */\ndfn{\r\n    font-style: italic;\n}\n/**\n * Add the correct background and color in IE 9-.\n */\nmark{\r\n    background-color: #ff0;\r\n    color: #000;\n}\n/**\n * Add the correct font size in all browsers.\n */\nsmall{\r\n    font-size: 80%;\n}\n/**\n * Prevent `sub` and `sup` elements from affecting the line height in\n * all browsers.\n */\nsub, sup{\r\n    font-size: 75%;\r\n    line-height: 0;\r\n    position: relative;\r\n    vertical-align: baseline;\n}\nsub{\r\n    bottom: -0.25em;\n}\nsup{\r\n    top: -0.5em;\n}\n/* Embedded content\n   ========================================================================== */\n/**\n * Add the correct display in IE 9-.\n */\naudio, video{\r\n    display: inline-block;\n}\n/**\n * Add the correct display in iOS 4-7.\n */\naudio:not([controls]){\r\n    display: none;\r\n    height: 0;\n}\n/**\n * Remove the border on images inside links in IE 10-.\n */\nimg{\r\n    border-style: none;\n}\n/**\n * Hide the overflow in IE.\n */\nsvg:not(:root){\r\n    overflow: hidden;\n}\n/* Forms\n   ========================================================================== */\n/**\n * Remove the margin in Firefox and Safari.\n */\nbutton, input, optgroup, select, textarea{\r\n    margin: 0;\n}\n/**\n * Show the overflow in IE.\n * 1. Show the overflow in Edge.\n */\nbutton, input{\n    /* 1 */\r\n    overflow: visible;\n}\n/**\n * Remove the inheritance of text transform in Edge, Firefox, and IE.\n * 1. Remove the inheritance of text transform in Firefox.\n */\nbutton, select{\n    /* 1 */\r\n    text-transform: none;\n}\n/**\n * 1. Prevent a WebKit bug where (2) destroys native `audio` and `video`\n *    controls in Android 4.\n * 2. Correct the inability to style clickable types in iOS and Safari.\n */\nbutton, html [type=\"button\"], [type=\"reset\"], [type=\"submit\"]{\r\n    -webkit-appearance: button;\n    /* 2 */\n}\n/**\n * Remove the inner border and padding in Firefox.\n */\nbutton::-moz-focus-inner, [type=\"button\"]::-moz-focus-inner, [type=\"reset\"]::-moz-focus-inner, [type=\"submit\"]::-moz-focus-inner{\r\n    border-style: none;\r\n    padding: 0;\n}\n/**\n * Restore the focus styles unset by the previous rule.\n */\nbutton:-moz-focusring, [type=\"button\"]:-moz-focusring, [type=\"reset\"]:-moz-focusring, [type=\"submit\"]:-moz-focusring{\r\n    outline: 1px dotted ButtonText;\n}\n/**\n * 1. Correct the text wrapping in Edge and IE.\n * 2. Correct the color inheritance from `fieldset` elements in IE.\n * 3. Remove the padding so developers are not caught out when they zero out\n *    `fieldset` elements in all browsers.\n */\nlegend{\r\n    box-sizing: border-box;\n    /* 1 */\r\n    color: inherit;\n    /* 2 */\r\n    display: table;\n    /* 1 */\r\n    max-width: 100%;\n    /* 1 */\r\n    padding: 0;\n    /* 3 */\r\n    white-space: normal;\n    /* 1 */\n}\n/**\n * 1. Add the correct display in IE 9-.\n * 2. Add the correct vertical alignment in Chrome, Firefox, and Opera.\n */\nprogress{\r\n    display: inline-block;\n    /* 1 */\r\n    vertical-align: baseline;\n    /* 2 */\n}\n/**\n * Remove the default vertical scrollbar in IE.\n */\ntextarea{\r\n    overflow: auto;\n}\n/**\n * 1. Add the correct box sizing in IE 10-.\n * 2. Remove the padding in IE 10-.\n */\n[type=\"checkbox\"], [type=\"radio\"]{\r\n    box-sizing: border-box;\n    /* 1 */\r\n    padding: 0;\n    /* 2 */\n}\n/**\n * Correct the cursor style of increment and decrement buttons in Chrome.\n */\n[type=\"number\"]::-webkit-inner-spin-button, [type=\"number\"]::-webkit-outer-spin-button{\r\n    height: auto;\n}\n/**\n * 1. Correct the odd appearance in Chrome and Safari.\n * 2. Correct the outline style in Safari.\n */\n[type=\"search\"]{\r\n    -webkit-appearance: textfield;\n    /* 1 */\r\n    outline-offset: -2px;\n    /* 2 */\n}\n/**\n * Remove the inner padding and cancel buttons in Chrome and Safari on macOS.\n */\n[type=\"search\"]::-webkit-search-cancel-button, [type=\"search\"]::-webkit-search-decoration{\r\n    -webkit-appearance: none;\n}\n/**\n * 1. Correct the inability to style clickable types in iOS and Safari.\n * 2. Change font properties to `inherit` in Safari.\n */\n::-webkit-file-upload-button{\r\n    -webkit-appearance: button;\n    /* 1 */\r\n    font: inherit;\n    /* 2 */\n}\n/* Interactive\n   ========================================================================== */\n/*\n * Add the correct display in IE 9-.\n * 1. Add the correct display in Edge, IE, and Firefox.\n */\ndetails, menu{\r\n    display: block;\n}\n/*\n * Add the correct display in all browsers.\n */\nsummary{\r\n    display: list-item;\n}\n/* Scripting\n   ========================================================================== */\n/**\n * Add the correct display in IE 9-.\n */\ncanvas{\r\n    display: inline-block;\n}\n/**\n * Add the correct display in IE.\n */\ntemplate{\r\n    display: none;\n}\n/* Hidden\n   ========================================================================== */\n/**\n * Add the correct display in IE 10-.\n */\n[hidden]{\r\n    display: none;\n}\n/*!\n Material Components for the web\n Copyright (c) 2017 Google Inc.\n License: Apache-2.0\n*/\n/**\n * The css property used for elevation. In most cases this should not be changed. It is exposed\n * as a variable for abstraction / easy use when needing to reference the property directly, for\n * example in a `will-change` rule.\n */\n/**\n * The default duration value for elevation transitions.\n */\n/**\n * The default easing value for elevation transitions.\n */\n/**\n * Applies the correct css rules to an element to give it the elevation specified by $z-value.\n * The $z-value must be between 0 and 24.\n */\n/**\n * Returns a string that can be used as the value for a `transition` property for elevation.\n * Calling this function directly is useful in situations where a component needs to transition\n * more than one property.\n *\n * ```scss\n * .foo {\n *   transition: mdc-elevation-transition-rule(), opacity 100ms ease;\n *   will-change: $mdc-elevation-property, opacity;\n * }\n * ```\n */\n/**\n * Applies the correct css rules needed to have an element transition between elevations.\n * This mixin should be applied to elements whose elevation values will change depending on their\n * context (e.g. when active or disabled).\n */\n/*\n  Precomputed linear color channel values, for use in contrast calculations.\n  See https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests\n\n  Algorithm, for c in 0 to 255:\n  f(c) {\n    c = c / 255;\n    return c < 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);\n  }\n\n  This lookup table is needed since there is no `pow` in SASS.\n*/\n/**\n * Calculate the luminance for a color.\n * See https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests\n */\n/**\n * Calculate the contrast ratio between two colors.\n * See https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests\n */\n/**\n * Determine whether to use dark or light text on top of given color.\n * Returns \"dark\" for dark text and \"light\" for light text.\n */\n/*\n  Main theme colors.\n  If you're a user customizing your color scheme in SASS, these are probably the only variables you need to change.\n*/\n/* Indigo 500 */\n/* Pink A200 */\n/* White */\n/* Which set of text colors to use for each main theme color (light or dark) */\n/* Text colors according to light vs dark and text type */\n/* Primary text colors for each of the theme colors */\n/**\n * Applies the correct theme color style to the specified property.\n * $property is typically color or background-color, but can be any CSS property that accepts color values.\n * $style should be one of the map keys in $mdc-theme-property-values (_variables.scss).\n */\n/**\n * Creates a rule to be used in MDC-Web components for dark theming, and applies the provided contents.\n * Should provide the $root-selector option if applied to anything other than the root selector.\n * When used with a modifier class, provide a second argument of `true` for the $compound parameter\n * to specify that this should be attached as a compound class.\n *\n * Usage example:\n *\n * ```scss\n * .mdc-foo {\n *   color: black;\n *\n *   @include mdc-theme-dark {\n *     color: white;\n *   }\n *\n *   &__bar {\n *     background: black;\n *\n *     @include mdc-theme-dark(\".mdc-foo\") {\n *       background: white;\n *     }\n *   }\n * }\n *\n * .mdc-foo--disabled {\n *   opacity: .38;\n *\n *   @include mdc-theme-dark(\".mdc-foo\", true) {\n *     opacity: .5;\n *   }\n * }\n * ```\n */\n/* TODO(sgomes): Figure out what to do about desktop font sizes. */\n/* TODO(sgomes): Figure out what to do about i18n and i18n font sizes. */\n.mdc-card{\r\n    box-shadow: 0px 3px 1px -2px rgba(0, 0, 0, .2), 0px 2px 2px 0px rgba(0, 0, 0, .14), 0px 1px 5px 0px rgba(0, 0, 0, .12);\r\n    display: -webkit-box;\r\n    display: -ms-flexbox;\r\n    display: flex;\r\n    -webkit-box-orient: vertical;\r\n    -webkit-box-direction: normal;\r\n    -ms-flex-direction: column;\r\n    flex-direction: column;\r\n    -webkit-box-pack: end;\r\n    -ms-flex-pack: end;\r\n    justify-content: flex-end;\r\n    padding: 0;\r\n    box-sizing: border-box;\n}\n.mdc-card__primary{\r\n    padding: 16px;\n}\n.mdc-card__primary .mdc-card__title--large{\r\n    padding-top: 8px;\n}\n.mdc-card__primary:last-child{\r\n    padding-bottom: 24px;\n}\n.mdc-card__supporting-text{\r\n    padding: 8px 16px;\r\n    box-sizing: border-box;\r\n    font-family: Roboto, sans-serif;\r\n    -moz-osx-font-smoothing: grayscale;\r\n    -webkit-font-smoothing: antialiased;\r\n    font-size: 0.875rem;\r\n    font-weight: 400;\r\n    letter-spacing: 0.04em;\r\n    line-height: 1.25rem;\r\n    color: rgba(0, 0, 0, .87);\r\n    color: rgba(0, 0, 0, .87);\n}\n.mdc-card--theme-dark .mdc-card__supporting-text, .mdc-theme--dark .mdc-card__supporting-text{\r\n    color: white;\r\n    color: white;\n}\n.mdc-card__primary + .mdc-card__supporting-text{\r\n    margin-top: -8px;\r\n    padding-top: 0;\n}\n.mdc-card__supporting-text:last-child{\r\n    padding-bottom: 24px;\n}\n.mdc-card__actions{\r\n    display: -webkit-box;\r\n    display: -ms-flexbox;\r\n    display: flex;\r\n    padding: 8px;\r\n    box-sizing: border-box;\n}\n.mdc-card--theme-dark .mdc-card__actions, .mdc-theme--dark .mdc-card__actions{\r\n    color: white;\r\n    color: white;\n}\n.mdc-card__actions .mdc-card__action{\r\n    margin: 0 8px 0 0;\n}\n.mdc-card__actions .mdc-card__action:last-child{\r\n    margin-right: 0;\n}\n.mdc-card__actions--vertical{\r\n    -webkit-box-orient: vertical;\r\n    -webkit-box-direction: normal;\r\n    -ms-flex-flow: column;\r\n    flex-flow: column;\r\n    -webkit-box-align: start;\r\n    -ms-flex-align: start;\r\n    align-items: flex-start;\n}\n.mdc-card__actions--vertical .mdc-card__action{\r\n    margin: 0 0 4px;\n}\n.mdc-card__actions--vertical .mdc-card__action:last-child{\r\n    margin-bottom: 0;\n}\n.mdc-card__media{\r\n    display: -webkit-box;\r\n    display: -ms-flexbox;\r\n    display: flex;\r\n    -webkit-box-orient: vertical;\r\n    -webkit-box-direction: normal;\r\n    -ms-flex-direction: column;\r\n    flex-direction: column;\r\n    -webkit-box-pack: end;\r\n    -ms-flex-pack: end;\r\n    justify-content: flex-end;\r\n    padding: 16px;\r\n    box-sizing: border-box;\n}\n.mdc-card__media-item{\r\n    display: inline-block;\r\n    width: auto;\r\n    height: 80px;\r\n    margin: 16px 0 0;\r\n    padding: 0;\n}\n.mdc-card__media-item--1dot5x{\r\n    width: auto;\r\n    height: 120px;\n}\n.mdc-card__media-item--2x{\r\n    width: auto;\r\n    height: 160px;\n}\n.mdc-card__media-item--3x{\r\n    width: auto;\r\n    height: 240px;\n}\n.mdc-card__title{\r\n    font-family: Roboto, sans-serif;\r\n    -moz-osx-font-smoothing: grayscale;\r\n    -webkit-font-smoothing: antialiased;\r\n    font-size: 0.875rem;\r\n    font-weight: 500;\r\n    letter-spacing: 0.04em;\r\n    line-height: 1.5rem;\r\n    color: rgba(0, 0, 0, .87);\r\n    color: rgba(0, 0, 0, .87);\r\n    margin: -.063rem 0;\n}\n.mdc-card--theme-dark .mdc-card__title, .mdc-theme--dark .mdc-card__title{\r\n    color: white;\r\n    color: white;\n}\n.mdc-card__title--large{\r\n    font-family: Roboto, sans-serif;\r\n    -moz-osx-font-smoothing: grayscale;\r\n    -webkit-font-smoothing: antialiased;\r\n    font-size: 1.5rem;\r\n    font-weight: 400;\r\n    letter-spacing: normal;\r\n    line-height: 2rem;\r\n    margin: 0;\n}\n.mdc-card__subtitle{\r\n    font-family: Roboto, sans-serif;\r\n    -moz-osx-font-smoothing: grayscale;\r\n    -webkit-font-smoothing: antialiased;\r\n    font-size: 0.875rem;\r\n    font-weight: 400;\r\n    letter-spacing: 0.04em;\r\n    line-height: 1.25rem;\r\n    color: rgba(0, 0, 0, .87);\r\n    color: rgba(0, 0, 0, .87);\r\n    margin: -.063rem 0;\n}\n.mdc-card--theme-dark .mdc-card__subtitle, .mdc-theme--dark .mdc-card__subtitle{\r\n    color: white;\r\n    color: white;\n}\n.mdc-card__horizontal-block{\r\n    display: -webkit-box;\r\n    display: -ms-flexbox;\r\n    display: flex;\r\n    -webkit-box-orient: horizontal;\r\n    -webkit-box-direction: normal;\r\n    -ms-flex-direction: row;\r\n    flex-direction: row;\r\n    -webkit-box-align: start;\r\n    -ms-flex-align: start;\r\n    align-items: flex-start;\r\n    -webkit-box-pack: justify;\r\n    -ms-flex-pack: justify;\r\n    justify-content: space-between;\r\n    padding: 0 16px 0 0;\r\n    box-sizing: border-box;\n}\n.mdc-card__horizontal-block .mdc-card__actions--vertical{\r\n    margin: 16px;\n}\n.mdc-card__horizontal-block .mdc-card__media-item{\r\n    margin-left: 16px;\n}\n.mdc-card__horizontal-block .mdc-card__media-item--3x{\r\n    margin-bottom: 16px;\n}\n/*!\n Material Components for the web\n Copyright (c) 2017 Google Inc.\n License: Apache-2.0\n*/\n/**\n * Creates a rule that will be applied when an MDC-Web component is within the context of an RTL layout.\n *\n * Usage Example:\n * ```scss\n * .mdc-foo {\n *   position: absolute;\n *   left: 0;\n *\n *   @include mdc-rtl {\n *     left: auto;\n *     right: 0;\n *   }\n *\n *   &__bar {\n *     margin-left: 4px;\n *     @include mdc-rtl(\".mdc-foo\") {\n *       margin-left: auto;\n *       margin-right: 4px;\n *     }\n *   }\n * }\n *\n * .mdc-foo--mod {\n *   padding-left: 4px;\n *\n *   @include mdc-rtl {\n *     padding-left: auto;\n *     padding-right: 4px;\n *   }\n * }\n * ```\n *\n * Note that this works by checking for [dir=\"rtl\"] on an ancestor element. While this will work\n * in most cases, it will in some cases lead to false negatives, e.g.\n *\n * ```html\n * <html dir=\"rtl\">\n *   <!-- ... -->\n *   <div dir=\"ltr\">\n *     <div class=\"mdc-foo\">Styled incorrectly as RTL!</div>\n *   </div>\n * </html>\n * ```\n *\n * In the future, selectors such as :dir (http://mdn.io/:dir) will help us mitigate this.\n */\n/**\n * Takes a base box-model property - e.g. margin / border / padding - along with a default\n * direction and value, and emits rules which apply the value to the\n * \"<base-property>-<default-direction>\" property by default, but flips the direction\n * when within an RTL context.\n *\n * For example:\n *\n * ```scss\n * .mdc-foo {\n *   @include mdc-rtl-reflexive-box(margin, left, 8px);\n * }\n * ```\n * is equivalent to:\n *\n * ```scss\n * .mdc-foo {\n *   margin-left: 8px;\n *\n *   @include mdc-rtl {\n *     margin-right: 8px;\n *     margin-left: 0;\n *   }\n * }\n * ```\n * whereas:\n *\n * ```scss\n * .mdc-foo {\n *   @include mdc-rtl-reflexive-box(margin, right, 8px);\n * }\n * ```\n * is equivalent to:\n *\n * ```scss\n * .mdc-foo {\n *   margin-right: 8px;\n *\n *   @include mdc-rtl {\n *     margin-right: 0;\n *     margin-left: 8px;\n *   }\n * }\n * ```\n *\n * You can also pass a 4th optional $root-selector argument which will be forwarded to `mdc-rtl`,\n * e.g. `@include mdc-rtl-reflexive-box-property(margin, left, 8px, \".mdc-component\")`.\n *\n * Note that this function will always zero out the original value in an RTL context. If you're\n * trying to flip the values, use mdc-rtl-reflexive-property().\n */\n/**\n * Takes a base property and emits rules that assign <base-property>-left to <left-value> and\n * <base-property>-right to <right-value> in a LTR context, and vice versa in a RTL context.\n * For example:\n *\n * ```scss\n * .mdc-foo {\n *   @include mdc-rtl-reflexive-property(margin, auto, 12px);\n * }\n * ```\n * is equivalent to:\n *\n * ```scss\n * .mdc-foo {\n *   margin-left: auto;\n *   margin-right: 12px;\n *\n *   @include mdc-rtl {\n *     margin-left: 12px;\n *     margin-right: auto;\n *   }\n * }\n * ```\n *\n * A 4th optional $root-selector argument can be given, which will be passed to `mdc-rtl`.\n */\n/**\n * Takes an argument specifying a horizontal position property (either \"left\" or \"right\") as well\n * as a value, and applies that value to the specified position in a LTR context, and flips it in a\n * RTL context. For example:\n *\n * ```scss\n * .mdc-foo {\n *   @include mdc-rtl-reflexive-position(left, 0);\n *   position: absolute;\n * }\n * ```\n * is equivalent to:\n *\n * ```scss\n *  .mdc-foo {\n *    position: absolute;\n *    left: 0;\n *    right: initial;\n *\n *    @include mdc-rtl {\n *      right: 0;\n *      left: initial;\n *    }\n *  }\n * ```\n * An optional third $root-selector argument may also be given, which is passed to `mdc-rtl`.\n */\n/*\n  Precomputed linear color channel values, for use in contrast calculations.\n  See https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests\n\n  Algorithm, for c in 0 to 255:\n  f(c) {\n    c = c / 255;\n    return c < 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);\n  }\n\n  This lookup table is needed since there is no `pow` in SASS.\n*/\n/**\n * Calculate the luminance for a color.\n * See https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests\n */\n/**\n * Calculate the contrast ratio between two colors.\n * See https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests\n */\n/**\n * Determine whether to use dark or light text on top of given color.\n * Returns \"dark\" for dark text and \"light\" for light text.\n */\n/*\n  Main theme colors.\n  If you're a user customizing your color scheme in SASS, these are probably the only variables you need to change.\n*/\n/* Indigo 500 */\n/* Pink A200 */\n/* White */\n/* Which set of text colors to use for each main theme color (light or dark) */\n/* Text colors according to light vs dark and text type */\n/* Primary text colors for each of the theme colors */\n/*\n  Precomputed linear color channel values, for use in contrast calculations.\n  See https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests\n\n  Algorithm, for c in 0 to 255:\n  f(c) {\n    c = c / 255;\n    return c < 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);\n  }\n\n  This lookup table is needed since there is no `pow` in SASS.\n*/\n/**\n * Calculate the luminance for a color.\n * See https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests\n */\n/**\n * Calculate the contrast ratio between two colors.\n * See https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests\n */\n/**\n * Determine whether to use dark or light text on top of given color.\n * Returns \"dark\" for dark text and \"light\" for light text.\n */\n/*\n  Main theme colors.\n  If you're a user customizing your color scheme in SASS, these are probably the only variables you need to change.\n*/\n/* Indigo 500 */\n/* Pink A200 */\n/* White */\n/* Which set of text colors to use for each main theme color (light or dark) */\n/* Text colors according to light vs dark and text type */\n/* Primary text colors for each of the theme colors */\n/**\n * Applies the correct theme color style to the specified property.\n * $property is typically color or background-color, but can be any CSS property that accepts color values.\n * $style should be one of the map keys in $mdc-theme-property-values (_variables.scss).\n */\n/**\n * Creates a rule to be used in MDC-Web components for dark theming, and applies the provided contents.\n * Should provide the $root-selector option if applied to anything other than the root selector.\n * When used with a modifier class, provide a second argument of `true` for the $compound parameter\n * to specify that this should be attached as a compound class.\n *\n * Usage example:\n *\n * ```scss\n * .mdc-foo {\n *   color: black;\n *\n *   @include mdc-theme-dark {\n *     color: white;\n *   }\n *\n *   &__bar {\n *     background: black;\n *\n *     @include mdc-theme-dark(\".mdc-foo\") {\n *       background: white;\n *     }\n *   }\n * }\n *\n * .mdc-foo--disabled {\n *   opacity: .38;\n *\n *   @include mdc-theme-dark(\".mdc-foo\", true) {\n *     opacity: .5;\n *   }\n * }\n * ```\n */\n/* TODO(sgomes): Figure out what to do about desktop font sizes. */\n/* TODO(sgomes): Figure out what to do about i18n and i18n font sizes. */\n/* TODO(sgomes): Figure out what to do about desktop font sizes. */\n/* TODO(sgomes): Figure out what to do about i18n and i18n font sizes. */\n.mdc-textfield{\r\n    font-family: Roboto, sans-serif;\r\n    -moz-osx-font-smoothing: grayscale;\r\n    -webkit-font-smoothing: antialiased;\r\n    font-size: 1rem;\r\n    letter-spacing: 0.04em;\r\n    display: inline-block;\r\n    margin-bottom: 8px;\r\n    will-change: opacity, transform, color;\n}\n.mdc-textfield__input{\r\n    color: rgba(0, 0, 0, .87);\r\n    color: rgba(0, 0, 0, .87);\r\n    padding: 0 0 8px;\r\n    border: none;\r\n    background: none;\r\n    font-size: inherit;\r\n    -webkit-appearance: none;\r\n    -moz-appearance: none;\r\n    appearance: none;\n}\n.mdc-textfield__input::-webkit-input-placeholder{\r\n    color: rgba(0, 0, 0, .38);\r\n    color: rgba(0, 0, 0, .38);\r\n    transition: color 180ms cubic-bezier(0.4, 0, 0.2, 1);\r\n    opacity: 1;\n}\n.mdc-textfield__input:-ms-input-placeholder{\r\n    color: rgba(0, 0, 0, .38);\r\n    color: rgba(0, 0, 0, .38);\r\n    transition: color 180ms cubic-bezier(0.4, 0, 0.2, 1);\r\n    opacity: 1;\n}\n.mdc-textfield__input::placeholder{\r\n    color: rgba(0, 0, 0, .38);\r\n    color: rgba(0, 0, 0, .38);\r\n    transition: color 180ms cubic-bezier(0.4, 0, 0.2, 1);\r\n    opacity: 1;\n}\n.mdc-textfield__input:focus{\r\n    outline: none;\n}\n.mdc-textfield__input:focus::-webkit-input-placeholder{\r\n    color: rgba(0, 0, 0, .54);\r\n    color: rgba(0, 0, 0, .54);\n}\n.mdc-textfield__input:focus:-ms-input-placeholder{\r\n    color: rgba(0, 0, 0, .54);\r\n    color: rgba(0, 0, 0, .54);\n}\n.mdc-textfield__input:focus::placeholder{\r\n    color: rgba(0, 0, 0, .54);\r\n    color: rgba(0, 0, 0, .54);\n}\n.mdc-textfield__input:invalid{\r\n    box-shadow: none;\n}\n.mdc-textfield__input--theme-dark, .mdc-theme--dark .mdc-textfield__input{\r\n    color: white;\n}\n.mdc-textfield__input--theme-dark::-webkit-input-placeholder, .mdc-theme--dark .mdc-textfield__input::-webkit-input-placeholder{\r\n    color: rgba(255, 255, 255, .5);\r\n    color: rgba(255, 255, 255, .5);\n}\n.mdc-textfield__input--theme-dark:-ms-input-placeholder, .mdc-theme--dark .mdc-textfield__input:-ms-input-placeholder{\r\n    color: rgba(255, 255, 255, .5);\r\n    color: rgba(255, 255, 255, .5);\n}\n.mdc-textfield__input--theme-dark::placeholder, .mdc-theme--dark .mdc-textfield__input::placeholder{\r\n    color: rgba(255, 255, 255, .5);\r\n    color: rgba(255, 255, 255, .5);\n}\n.mdc-textfield__input--theme-dark:focus::-webkit-input-placeholder, .mdc-theme--dark .mdc-textfield__input:focus::-webkit-input-placeholder{\r\n    color: rgba(255, 255, 255, .7);\r\n    color: rgba(255, 255, 255, .7);\n}\n.mdc-textfield__input--theme-dark:focus:-ms-input-placeholder, .mdc-theme--dark .mdc-textfield__input:focus:-ms-input-placeholder{\r\n    color: rgba(255, 255, 255, .7);\r\n    color: rgba(255, 255, 255, .7);\n}\n.mdc-textfield__input--theme-dark:focus::placeholder, .mdc-theme--dark .mdc-textfield__input:focus::placeholder{\r\n    color: rgba(255, 255, 255, .7);\r\n    color: rgba(255, 255, 255, .7);\n}\n.mdc-textfield__label{\r\n    color: rgba(0, 0, 0, .38);\r\n    color: rgba(0, 0, 0, .38);\r\n    position: absolute;\r\n    bottom: 8px;\r\n    left: 0;\r\n    -webkit-transform-origin: left top;\r\n    transform-origin: left top;\r\n    transition: color 180ms cubic-bezier(0.4, 0, 0.2, 1), -webkit-transform 180ms cubic-bezier(0.4, 0, 0.2, 1);\r\n    transition: transform 180ms cubic-bezier(0.4, 0, 0.2, 1), color 180ms cubic-bezier(0.4, 0, 0.2, 1);\r\n    transition: transform 180ms cubic-bezier(0.4, 0, 0.2, 1), color 180ms cubic-bezier(0.4, 0, 0.2, 1), -webkit-transform 180ms cubic-bezier(0.4, 0, 0.2, 1);\r\n    cursor: text;\n}\n[dir=\"rtl\"] .mdc-textfield .mdc-textfield__label, .mdc-textfield[dir=\"rtl\"] .mdc-textfield__label{\r\n    right: 0;\r\n    left: auto;\r\n    -webkit-transform-origin: right top;\r\n    transform-origin: right top;\n}\n.mdc-textfield--theme-dark .mdc-textfield__label, .mdc-theme--dark .mdc-textfield__label{\r\n    color: rgba(255, 255, 255, .5);\r\n    color: rgba(255, 255, 255, .5);\n}\n.mdc-textfield__label--float-above{\r\n    -webkit-transform: translateY(-100%) scale(0.75, 0.75);\r\n    transform: translateY(-100%) scale(0.75, 0.75);\r\n    cursor: auto;\n}\n.mdc-textfield__input:-webkit-autofill + .mdc-textfield__label{\r\n    -webkit-transform: translateY(-100%) scale(0.75, 0.75);\r\n    transform: translateY(-100%) scale(0.75, 0.75);\r\n    cursor: auto;\n}\n.mdc-textfield--upgraded:not(.mdc-textfield--fullwidth){\r\n    display: -webkit-inline-box;\r\n    display: -ms-inline-flexbox;\r\n    display: inline-flex;\r\n    position: relative;\r\n    box-sizing: border-box;\r\n    -webkit-box-align: end;\r\n    -ms-flex-align: end;\r\n    align-items: flex-end;\r\n    margin-top: 16px;\n}\n.mdc-textfield--upgraded:not(.mdc-textfield--fullwidth):not(.mdc-textfield--multiline){\r\n    height: 48px;\n}\n.mdc-textfield--upgraded:not(.mdc-textfield--fullwidth):not(.mdc-textfield--multiline)::after{\r\n    position: absolute;\r\n    bottom: 0;\r\n    left: 0;\r\n    width: 100%;\r\n    height: 1px;\r\n    -webkit-transform: translateY(50%) scaleY(1);\r\n    transform: translateY(50%) scaleY(1);\r\n    -webkit-transform-origin: center bottom;\r\n    transform-origin: center bottom;\r\n    transition: background-color 180ms cubic-bezier(0.4, 0, 0.2, 1), -webkit-transform 180ms cubic-bezier(0.4, 0, 0.2, 1);\r\n    transition: background-color 180ms cubic-bezier(0.4, 0, 0.2, 1), transform 180ms cubic-bezier(0.4, 0, 0.2, 1);\r\n    transition: background-color 180ms cubic-bezier(0.4, 0, 0.2, 1), transform 180ms cubic-bezier(0.4, 0, 0.2, 1), -webkit-transform 180ms cubic-bezier(0.4, 0, 0.2, 1);\r\n    background-color: rgba(0, 0, 0, .12);\r\n    content: \"\";\n}\n.mdc-textfield--theme-dark .mdc-textfield--upgraded:not(.mdc-textfield--fullwidth):not(.mdc-textfield--multiline)::after, .mdc-theme--dark .mdc-textfield--upgraded:not(.mdc-textfield--fullwidth):not(.mdc-textfield--multiline)::after{\r\n    background-color: rgba(255, 255, 255, .12);\n}\n.mdc-textfield--upgraded:not(.mdc-textfield--fullwidth) .mdc-textfield__label{\r\n    pointer-events: none;\n}\n.mdc-textfield--focused.mdc-textfield--upgraded:not(.mdc-textfield--fullwidth):not(.mdc-textfield--multiline)::after{\r\n    background-color: #3f51b5;\r\n    background-color: #3f51b5;\r\n    -webkit-transform: translateY(100%) scaleY(2);\r\n    transform: translateY(100%) scaleY(2);\r\n    transition: -webkit-transform 180ms cubic-bezier(0.4, 0, 0.2, 1);\r\n    transition: transform 180ms cubic-bezier(0.4, 0, 0.2, 1);\r\n    transition: transform 180ms cubic-bezier(0.4, 0, 0.2, 1), -webkit-transform 180ms cubic-bezier(0.4, 0, 0.2, 1);\n}\n.mdc-textfield--theme-dark.mdc-textfield--focused.mdc-textfield--upgraded:not(.mdc-textfield--fullwidth):not(.mdc-textfield--multiline)::after, .mdc-theme--dark .mdc-textfield--focused.mdc-textfield--upgraded:not(.mdc-textfield--fullwidth):not(.mdc-textfield--multiline)::after{\r\n    background-color: #3f51b5;\r\n    background-color: #3f51b5;\r\n    -webkit-transform: translateY(100%) scaleY(2);\r\n    transform: translateY(100%) scaleY(2);\r\n    transition: -webkit-transform 180ms cubic-bezier(0.4, 0, 0.2, 1);\r\n    transition: transform 180ms cubic-bezier(0.4, 0, 0.2, 1);\r\n    transition: transform 180ms cubic-bezier(0.4, 0, 0.2, 1), -webkit-transform 180ms cubic-bezier(0.4, 0, 0.2, 1);\n}\n.mdc-textfield--focused .mdc-textfield__label{\r\n    color: #3f51b5;\r\n    color: #3f51b5;\n}\n.mdc-textfield--theme-dark .mdc-textfield--focused .mdc-textfield__label, .mdc-theme--dark .mdc-textfield--focused .mdc-textfield__label{\r\n    color: #3f51b5;\r\n    color: #3f51b5;\n}\n.mdc-textfield--dense{\r\n    margin-top: 12px;\r\n    margin-bottom: 4px;\r\n    font-size: .813rem;\n}\n.mdc-textfield--dense .mdc-textfield__label--float-above{\r\n    -webkit-transform: translateY(calc(-100% - 2px)) scale(0.923, 0.923);\r\n    transform: translateY(calc(-100% - 2px)) scale(0.923, 0.923);\n}\n.mdc-textfield--invalid:not(.mdc-textfield--focused)::after{\r\n    background-color: #d50000;\n}\n.mdc-textfield--invalid:not(.mdc-textfield--focused) .mdc-textfield__label{\r\n    color: #d50000;\n}\n.mdc-textfield--theme-dark.mdc-textfield--invalid:not(.mdc-textfield--focused)::after, .mdc-theme--dark .mdc-textfield--invalid:not(.mdc-textfield--focused)::after{\r\n    background-color: #ff6e6e;\n}\n.mdc-textfield--theme-dark.mdc-textfield--invalid:not(.mdc-textfield--focused) .mdc-textfield__label, .mdc-theme--dark .mdc-textfield--invalid:not(.mdc-textfield--focused) .mdc-textfield__label{\r\n    color: #ff6e6e;\n}\n.mdc-textfield--disabled{\r\n    border-bottom: 1px dotted rgba(35, 31, 32, .26);\n}\n.mdc-textfield--disabled::after{\r\n    display: none;\n}\n.mdc-textfield--disabled .mdc-textfield__input{\r\n    padding-bottom: 7px;\n}\n.mdc-textfield--theme-dark.mdc-textfield--disabled, .mdc-theme--dark .mdc-textfield--disabled{\r\n    border-bottom: 1px dotted rgba(255, 255, 255, .3);\n}\n.mdc-textfield--disabled .mdc-textfield__input, .mdc-textfield--disabled .mdc-textfield__label, .mdc-textfield--disabled + .mdc-textfield-helptext{\r\n    color: rgba(0, 0, 0, .38);\r\n    color: rgba(0, 0, 0, .38);\n}\n.mdc-textfield--theme-dark .mdc-textfield--disabled .mdc-textfield__input, .mdc-theme--dark .mdc-textfield--disabled .mdc-textfield__input, .mdc-textfield--theme-dark\n  .mdc-textfield--disabled .mdc-textfield__label, .mdc-theme--dark\n  .mdc-textfield--disabled .mdc-textfield__label{\r\n    color: rgba(255, 255, 255, .5);\r\n    color: rgba(255, 255, 255, .5);\n}\n.mdc-textfield--theme-dark.mdc-textfield--disabled + .mdc-textfield-helptext, .mdc-theme--dark .mdc-textfield--disabled + .mdc-textfield-helptext{\r\n    color: rgba(255, 255, 255, .5);\r\n    color: rgba(255, 255, 255, .5);\n}\n.mdc-textfield--disabled .mdc-textfield__label{\r\n    bottom: 7px;\r\n    cursor: default;\n}\n.mdc-textfield__input:required + .mdc-textfield__label::after{\r\n    margin-left: 1px;\r\n    content: \"*\";\n}\n.mdc-textfield--focused .mdc-textfield__input:required + .mdc-textfield__label::after{\r\n    color: #d50000;\n}\n.mdc-textfield--focused .mdc-textfield--theme-dark .mdc-textfield__input:required + .mdc-textfield__label::after, .mdc-textfield--focused\n  .mdc-theme--dark .mdc-textfield__input:required + .mdc-textfield__label::after{\r\n    color: #ff6e6e;\n}\n.mdc-textfield--multiline{\r\n    display: -webkit-box;\r\n    display: -ms-flexbox;\r\n    display: flex;\r\n    height: auto;\r\n    height: initial;\r\n    transition: none;\n}\n.mdc-textfield--multiline::after{\r\n    content: normal;\r\n    content: initial;\n}\n.mdc-textfield--multiline .mdc-textfield__input{\r\n    padding: 4px;\r\n    transition: border-color 180ms cubic-bezier(0.4, 0, 0.2, 1);\r\n    border: 1px solid rgba(0, 0, 0, .12);\r\n    border-radius: 2px;\n}\n.mdc-textfield--theme-dark .mdc-textfield--multiline .mdc-textfield__input, .mdc-theme--dark .mdc-textfield--multiline .mdc-textfield__input{\r\n    border-color: rgba(255, 255, 255, .12);\n}\n.mdc-textfield--multiline .mdc-textfield__input:focus{\r\n    border-color: #3f51b5;\r\n    border-color: #3f51b5;\n}\n.mdc-textfield--multiline .mdc-textfield__input:invalid:not(:focus){\r\n    border-color: #d50000;\n}\n.mdc-textfield--theme-dark .mdc-textfield--multiline .mdc-textfield__input:invalid:not(:focus), .mdc-theme--dark .mdc-textfield--multiline .mdc-textfield__input:invalid:not(:focus){\r\n    border-color: #ff6e6e;\n}\n.mdc-textfield--multiline .mdc-textfield__label{\r\n    top: 6px;\r\n    bottom: auto;\r\n    bottom: initial;\r\n    left: 4px;\n}\n[dir=\"rtl\"] .mdc-textfield--multiline .mdc-textfield--multiline .mdc-textfield__label, .mdc-textfield--multiline[dir=\"rtl\"] .mdc-textfield--multiline .mdc-textfield__label{\r\n    right: 4px;\r\n    left: auto;\n}\n.mdc-textfield--multiline .mdc-textfield__label--float-above{\r\n    -webkit-transform: translateY(calc(-100% - 6px)) scale(0.923, 0.923);\r\n    transform: translateY(calc(-100% - 6px)) scale(0.923, 0.923);\n}\n.mdc-textfield--multiline.mdc-textfield--disabled{\r\n    border-bottom: none;\n}\n.mdc-textfield--multiline.mdc-textfield--disabled .mdc-textfield__input{\r\n    border: 1px dotted rgba(35, 31, 32, .26);\n}\n.mdc-textfield--theme-dark .mdc-textfield--multiline.mdc-textfield--disabled .mdc-textfield__input, .mdc-theme--dark .mdc-textfield--multiline.mdc-textfield--disabled .mdc-textfield__input{\r\n    border-color: rgba(255, 255, 255, .3);\n}\n.mdc-textfield--fullwidth{\r\n    display: block;\r\n    width: 100%;\r\n    box-sizing: border-box;\r\n    margin: 0;\r\n    border: none;\r\n    border-bottom: 1px solid rgba(0, 0, 0, .12);\r\n    outline: none;\n}\n.mdc-textfield--fullwidth:not(.mdc-textfield--multiline){\r\n    height: 56px;\n}\n.mdc-textfield--fullwidth.mdc-textfield--multiline{\r\n    padding: 20px 0 0;\n}\n.mdc-textfield--fullwidth.mdc-textfield--dense:not(.mdc-textfield--multiline){\r\n    height: 48px;\n}\n.mdc-textfield--fullwidth.mdc-textfield--dense.mdc-textfield--multiline{\r\n    padding: 16px 0 0;\n}\n.mdc-textfield--fullwidth.mdc-textfield--disabled, .mdc-textfield--fullwidth.mdc-textfield--disabled.mdc-textfield--multiline{\r\n    border-bottom: 1px dotted rgba(0, 0, 0, .12);\n}\n.mdc-textfield--fullwidth--theme-dark, .mdc-theme--dark .mdc-textfield--fullwidth{\r\n    border-bottom: 1px solid rgba(255, 255, 255, .12);\n}\n.mdc-textfield--fullwidth--theme-dark.mdc-textfield--disabled, .mdc-textfield--fullwidth--theme-dark.mdc-textfield--disabled.mdc-textfield--multiline, .mdc-theme--dark .mdc-textfield--fullwidth.mdc-textfield--disabled, .mdc-theme--dark .mdc-textfield--fullwidth.mdc-textfield--disabled.mdc-textfield--multiline{\r\n    border-bottom: 1px dotted rgba(255, 255, 255, .12);\n}\n.mdc-textfield--fullwidth .mdc-textfield__input{\r\n    width: 100%;\r\n    height: 100%;\r\n    padding: 0;\r\n    resize: none;\r\n    border: none !important;\n}\n.mdc-textfield:not(.mdc-textfield--upgraded):not(.mdc-textfield--multiline) .mdc-textfield__input{\r\n    transition: border-bottom-color 180ms cubic-bezier(0.4, 0, 0.2, 1);\r\n    border-bottom: 1px solid rgba(0, 0, 0, .12);\n}\n.mdc-textfield:not(.mdc-textfield--upgraded) .mdc-textfield__input:focus{\r\n    border-color: #3f51b5;\r\n    border-color: #3f51b5;\n}\n.mdc-textfield:not(.mdc-textfield--upgraded) .mdc-textfield__input:disabled{\r\n    color: rgba(0, 0, 0, .38);\r\n    color: rgba(0, 0, 0, .38);\r\n    border-style: dotted;\r\n    border-color: rgba(35, 31, 32, .26);\n}\n.mdc-textfield:not(.mdc-textfield--upgraded) .mdc-textfield__input:invalid:not(:focus){\r\n    border-color: #d50000;\n}\n.mdc-textfield--theme-dark:not(.mdc-textfield--upgraded) .mdc-textfield__input:not(:focus), .mdc-theme--dark .mdc-textfield:not(.mdc-textfield--upgraded) .mdc-textfield__input:not(:focus){\r\n    border-color: rgba(255, 255, 255, .12);\n}\n.mdc-textfield--theme-dark:not(.mdc-textfield--upgraded) .mdc-textfield__input:disabled, .mdc-theme--dark .mdc-textfield:not(.mdc-textfield--upgraded) .mdc-textfield__input:disabled{\r\n    color: rgba(255, 255, 255, .5);\r\n    color: rgba(255, 255, 255, .5);\r\n    border-color: rgba(255, 255, 255, .3);\n}\n.mdc-textfield--theme-dark:not(.mdc-textfield--upgraded) .mdc-textfield__input:invalid:not(:focus), .mdc-theme--dark .mdc-textfield:not(.mdc-textfield--upgraded) .mdc-textfield__input:invalid:not(:focus){\r\n    border-color: #ff6e6e;\n}\n.mdc-textfield-helptext{\r\n    color: rgba(0, 0, 0, .38);\r\n    color: rgba(0, 0, 0, .38);\r\n    margin: 0;\r\n    transition: opacity 180ms cubic-bezier(0.4, 0, 0.2, 1);\r\n    font-size: .75rem;\r\n    opacity: 0;\r\n    will-change: opacity;\n}\n.mdc-textfield-helptext--theme-dark, .mdc-theme--dark .mdc-textfield-helptext{\r\n    color: rgba(255, 255, 255, .5);\r\n    color: rgba(255, 255, 255, .5);\n}\n.mdc-textfield + .mdc-textfield-helptext{\r\n    margin-bottom: 8px;\n}\n.mdc-textfield--dense + .mdc-textfield-helptext{\r\n    margin-bottom: 4px;\n}\n.mdc-textfield--focused + .mdc-textfield-helptext:not(.mdc-textfield-helptext--validation-msg){\r\n    opacity: 1;\n}\n.mdc-textfield-helptext--persistent{\r\n    transition: none;\r\n    opacity: 1;\r\n    will-change: initial;\n}\n.mdc-textfield--invalid + .mdc-textfield-helptext--validation-msg{\r\n    color: #d50000;\r\n    opacity: 1;\n}\n.mdc-textfield--theme-dark.mdc-textfield--invalid + .mdc-textfield-helptext--validation-msg, .mdc-theme--dark .mdc-textfield--invalid + .mdc-textfield-helptext--validation-msg{\r\n    color: #ff6e6e;\n}\n.mdc-form-field > .mdc-textfield + label{\r\n    -ms-flex-item-align: start;\r\n    align-self: flex-start;\n}\n/*!\n Material Components for the web\n Copyright (c) 2017 Google Inc.\n License: Apache-2.0\n*/\n/**\n * The css property used for elevation. In most cases this should not be changed. It is exposed\n * as a variable for abstraction / easy use when needing to reference the property directly, for\n * example in a `will-change` rule.\n */\n/**\n * The default duration value for elevation transitions.\n */\n/**\n * The default easing value for elevation transitions.\n */\n/**\n * Applies the correct css rules to an element to give it the elevation specified by $z-value.\n * The $z-value must be between 0 and 24.\n */\n/**\n * Returns a string that can be used as the value for a `transition` property for elevation.\n * Calling this function directly is useful in situations where a component needs to transition\n * more than one property.\n *\n * ```scss\n * .foo {\n *   transition: mdc-elevation-transition-rule(), opacity 100ms ease;\n *   will-change: $mdc-elevation-property, opacity;\n * }\n * ```\n */\n/**\n * Applies the correct css rules needed to have an element transition between elevations.\n * This mixin should be applied to elements whose elevation values will change depending on their\n * context (e.g. when active or disabled).\n */\n/*\n  Precomputed linear color channel values, for use in contrast calculations.\n  See https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests\n\n  Algorithm, for c in 0 to 255:\n  f(c) {\n    c = c / 255;\n    return c < 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);\n  }\n\n  This lookup table is needed since there is no `pow` in SASS.\n*/\n/**\n * Calculate the luminance for a color.\n * See https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests\n */\n/**\n * Calculate the contrast ratio between two colors.\n * See https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests\n */\n/**\n * Determine whether to use dark or light text on top of given color.\n * Returns \"dark\" for dark text and \"light\" for light text.\n */\n/*\n  Main theme colors.\n  If you're a user customizing your color scheme in SASS, these are probably the only variables you need to change.\n*/\n/* Indigo 500 */\n/* Pink A200 */\n/* White */\n/* Which set of text colors to use for each main theme color (light or dark) */\n/* Text colors according to light vs dark and text type */\n/* Primary text colors for each of the theme colors */\n/** MDC Ripple keyframes are split into their own file so that _mixins.scss can rely on them. */\n@-webkit-keyframes mdc-ripple-fg-radius-in{\n    from{\r\n        -webkit-transform: translate(0) scale(1);\r\n        transform: translate(0) scale(1);\r\n        -webkit-animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);\r\n        animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);\n    }\n    to{\r\n        -webkit-transform: translate(0) scale(1);\r\n        transform: translate(0) scale(1);\n    }\n}\n@keyframes mdc-ripple-fg-radius-in{\n    from{\r\n        -webkit-transform: translate(0) scale(1);\r\n        transform: translate(0) scale(1);\r\n        -webkit-animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);\r\n        animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);\n    }\n    to{\r\n        -webkit-transform: translate(0) scale(1);\r\n        transform: translate(0) scale(1);\n    }\n}\n@-webkit-keyframes mdc-ripple-fg-opacity-in{\n    from{\r\n        opacity: 0;\r\n        -webkit-animation-timing-function: linear;\r\n        animation-timing-function: linear;\n    }\n    to{\r\n        opacity: 1;\n    }\n}\n@keyframes mdc-ripple-fg-opacity-in{\n    from{\r\n        opacity: 0;\r\n        -webkit-animation-timing-function: linear;\r\n        animation-timing-function: linear;\n    }\n    to{\r\n        opacity: 1;\n    }\n}\n@-webkit-keyframes mdc-ripple-fg-opacity-out{\n    from{\r\n        opacity: 1;\r\n        -webkit-animation-timing-function: linear;\r\n        animation-timing-function: linear;\n    }\n    to{\r\n        opacity: 0;\n    }\n}\n@keyframes mdc-ripple-fg-opacity-out{\n    from{\r\n        opacity: 1;\r\n        -webkit-animation-timing-function: linear;\r\n        animation-timing-function: linear;\n    }\n    to{\r\n        opacity: 0;\n    }\n}\n/*\n  Precomputed linear color channel values, for use in contrast calculations.\n  See https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests\n\n  Algorithm, for c in 0 to 255:\n  f(c) {\n    c = c / 255;\n    return c < 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);\n  }\n\n  This lookup table is needed since there is no `pow` in SASS.\n*/\n/**\n * Calculate the luminance for a color.\n * See https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests\n */\n/**\n * Calculate the contrast ratio between two colors.\n * See https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests\n */\n/**\n * Determine whether to use dark or light text on top of given color.\n * Returns \"dark\" for dark text and \"light\" for light text.\n */\n/*\n  Main theme colors.\n  If you're a user customizing your color scheme in SASS, these are probably the only variables you need to change.\n*/\n/* Indigo 500 */\n/* Pink A200 */\n/* White */\n/* Which set of text colors to use for each main theme color (light or dark) */\n/* Text colors according to light vs dark and text type */\n/* Primary text colors for each of the theme colors */\n/**\n * Applies the correct theme color style to the specified property.\n * $property is typically color or background-color, but can be any CSS property that accepts color values.\n * $style should be one of the map keys in $mdc-theme-property-values (_variables.scss).\n */\n/**\n * Creates a rule to be used in MDC-Web components for dark theming, and applies the provided contents.\n * Should provide the $root-selector option if applied to anything other than the root selector.\n * When used with a modifier class, provide a second argument of `true` for the $compound parameter\n * to specify that this should be attached as a compound class.\n *\n * Usage example:\n *\n * ```scss\n * .mdc-foo {\n *   color: black;\n *\n *   @include mdc-theme-dark {\n *     color: white;\n *   }\n *\n *   &__bar {\n *     background: black;\n *\n *     @include mdc-theme-dark(\".mdc-foo\") {\n *       background: white;\n *     }\n *   }\n * }\n *\n * .mdc-foo--disabled {\n *   opacity: .38;\n *\n *   @include mdc-theme-dark(\".mdc-foo\", true) {\n *     opacity: .5;\n *   }\n * }\n * ```\n */\n/* TODO(sgomes): Figure out what to do about desktop font sizes. */\n/* TODO(sgomes): Figure out what to do about i18n and i18n font sizes. */\n.mdc-button{\r\n    --mdc-ripple-surface-width: 0;\r\n    --mdc-ripple-surface-height: 0;\r\n    --mdc-ripple-fg-size: 0;\r\n    --mdc-ripple-left: 0;\r\n    --mdc-ripple-top: 0;\r\n    --mdc-ripple-fg-scale: 1;\r\n    --mdc-ripple-fg-translate-end: 0;\r\n    --mdc-ripple-fg-translate-start: 0;\r\n    will-change: transform, opacity;\r\n    -webkit-tap-highlight-color: transparent;\r\n    font-family: Roboto, sans-serif;\r\n    -moz-osx-font-smoothing: grayscale;\r\n    -webkit-font-smoothing: antialiased;\r\n    font-size: 0.875rem;\r\n    font-weight: 500;\r\n    letter-spacing: 0.04em;\r\n    line-height: 1.5rem;\r\n    color: rgba(0, 0, 0, .87);\r\n    color: rgba(0, 0, 0, .87);\r\n    display: inline-block;\r\n    position: relative;\r\n    min-width: 64px;\r\n    height: 36px;\r\n    padding: 0 16px;\r\n    border: none;\r\n    border-radius: 2px;\r\n    outline: none;\r\n    background: transparent;\r\n    font-size: 14px;\r\n    font-weight: 500;\r\n    line-height: 36px;\r\n    text-align: center;\r\n    text-decoration: none;\r\n    text-transform: uppercase;\r\n    overflow: hidden;\r\n    vertical-align: middle;\r\n    -webkit-user-select: none;\r\n    -moz-user-select: none;\r\n    -ms-user-select: none;\r\n    user-select: none;\r\n    box-sizing: border-box;\r\n    -webkit-appearance: none;\n}\n.mdc-button:not(.mdc-ripple-upgraded):hover::before, .mdc-button:not(.mdc-ripple-upgraded):focus::before, .mdc-button:not(.mdc-ripple-upgraded):active::after{\r\n    transition-duration: 85ms;\r\n    opacity: .6;\n}\n.mdc-button::before{\r\n    background-color: rgba(0, 0, 0, .06);\r\n    position: absolute;\r\n    top: -50%;\r\n    left: -50%;\r\n    width: 200%;\r\n    height: 200%;\r\n    transition: opacity 250ms linear;\r\n    border-radius: 50%;\r\n    opacity: 0;\r\n    pointer-events: none;\r\n    content: \"\";\n}\n.mdc-button.mdc-ripple-upgraded::before{\r\n    top: -50%;\r\n    left: -50%;\r\n    width: 200%;\r\n    height: 200%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\n}\n.mdc-button.mdc-ripple-upgraded--background-focused::before{\r\n    opacity: .99999;\n}\n.mdc-button.mdc-ripple-upgraded--background-active-fill::before{\r\n    transition-duration: 120ms;\r\n    opacity: 1;\n}\n.mdc-button.mdc-ripple-upgraded--unbounded::before{\r\n    top: 0%;\r\n    top: 0%;\r\n    left: 0%;\r\n    left: 0%;\r\n    width: 100%;\r\n    width: 100%;\r\n    height: 100%;\r\n    height: 100%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\n}\n.mdc-button::after{\r\n    background-color: rgba(0, 0, 0, .06);\r\n    position: absolute;\r\n    top: -50%;\r\n    left: -50%;\r\n    width: 200%;\r\n    height: 200%;\r\n    transition: opacity 250ms linear;\r\n    border-radius: 50%;\r\n    opacity: 0;\r\n    pointer-events: none;\r\n    content: \"\";\n}\n.mdc-button.mdc-ripple-upgraded::after{\r\n    top: 0;\r\n    left: 0;\r\n    width: 100%;\r\n    width: 100%;\r\n    height: 100%;\r\n    height: 100%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform-origin: center center;\r\n    transform-origin: center center;\r\n    opacity: 0;\n}\n.mdc-button:not(.mdc-ripple-upgraded--unbounded)::after{\r\n    -webkit-transform-origin: center center;\r\n    transform-origin: center center;\n}\n.mdc-button.mdc-ripple-upgraded--unbounded::after{\r\n    top: 0;\r\n    top: 0;\r\n    left: 0;\r\n    left: 0;\r\n    width: 100%;\r\n    width: 100%;\r\n    height: 100%;\r\n    height: 100%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform-origin: center center;\r\n    transform-origin: center center;\n}\n.mdc-button.mdc-ripple-upgraded--foreground-activation::after{\r\n    -webkit-animation: 300ms mdc-ripple-fg-radius-in forwards, 83ms mdc-ripple-fg-opacity-in forwards;\r\n    animation: 300ms mdc-ripple-fg-radius-in forwards, 83ms mdc-ripple-fg-opacity-in forwards;\n}\n.mdc-button.mdc-ripple-upgraded--foreground-deactivation::after{\r\n    -webkit-transform: translate(0) scale(1);\r\n    transform: translate(0) scale(1);\r\n    -webkit-animation: 250ms mdc-ripple-fg-opacity-out;\r\n    animation: 250ms mdc-ripple-fg-opacity-out;\n}\n.mdc-button:not(.mdc-ripple-upgraded){\r\n    -webkit-tap-highlight-color: rgba(0, 0, 0, .18);\n}\n.mdc-button--theme-dark, .mdc-theme--dark .mdc-button{\r\n    --mdc-ripple-surface-width: 0;\r\n    --mdc-ripple-surface-height: 0;\r\n    --mdc-ripple-fg-size: 0;\r\n    --mdc-ripple-left: 0;\r\n    --mdc-ripple-top: 0;\r\n    --mdc-ripple-fg-scale: 1;\r\n    --mdc-ripple-fg-translate-end: 0;\r\n    --mdc-ripple-fg-translate-start: 0;\r\n    will-change: transform, opacity;\r\n    -webkit-tap-highlight-color: transparent;\r\n    color: white;\r\n    color: white;\n}\n.mdc-button--theme-dark:not(.mdc-ripple-upgraded):hover::before, .mdc-button--theme-dark:not(.mdc-ripple-upgraded):focus::before, .mdc-button--theme-dark:not(.mdc-ripple-upgraded):active::after, .mdc-theme--dark .mdc-button:not(.mdc-ripple-upgraded):hover::before, .mdc-theme--dark .mdc-button:not(.mdc-ripple-upgraded):focus::before, .mdc-theme--dark .mdc-button:not(.mdc-ripple-upgraded):active::after{\r\n    transition-duration: 85ms;\r\n    opacity: .6;\n}\n.mdc-button--theme-dark::before, .mdc-theme--dark .mdc-button::before{\r\n    background-color: rgba(255, 255, 255, .14);\r\n    position: absolute;\r\n    top: -50%;\r\n    left: -50%;\r\n    width: 200%;\r\n    height: 200%;\r\n    transition: opacity 250ms linear;\r\n    border-radius: 50%;\r\n    opacity: 0;\r\n    pointer-events: none;\r\n    content: \"\";\n}\n.mdc-button--theme-dark.mdc-ripple-upgraded::before, .mdc-theme--dark .mdc-button.mdc-ripple-upgraded::before{\r\n    top: -50%;\r\n    left: -50%;\r\n    width: 200%;\r\n    height: 200%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\n}\n.mdc-button--theme-dark.mdc-ripple-upgraded--background-focused::before, .mdc-theme--dark .mdc-button.mdc-ripple-upgraded--background-focused::before{\r\n    opacity: .99999;\n}\n.mdc-button--theme-dark.mdc-ripple-upgraded--background-active-fill::before, .mdc-theme--dark .mdc-button.mdc-ripple-upgraded--background-active-fill::before{\r\n    transition-duration: 120ms;\r\n    opacity: 1;\n}\n.mdc-button--theme-dark.mdc-ripple-upgraded--unbounded::before, .mdc-theme--dark .mdc-button.mdc-ripple-upgraded--unbounded::before{\r\n    top: 0%;\r\n    top: 0%;\r\n    left: 0%;\r\n    left: 0%;\r\n    width: 100%;\r\n    width: 100%;\r\n    height: 100%;\r\n    height: 100%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\n}\n.mdc-button--theme-dark::after, .mdc-theme--dark .mdc-button::after{\r\n    background-color: rgba(255, 255, 255, .14);\r\n    position: absolute;\r\n    top: -50%;\r\n    left: -50%;\r\n    width: 200%;\r\n    height: 200%;\r\n    transition: opacity 250ms linear;\r\n    border-radius: 50%;\r\n    opacity: 0;\r\n    pointer-events: none;\r\n    content: \"\";\n}\n.mdc-button--theme-dark.mdc-ripple-upgraded::after, .mdc-theme--dark .mdc-button.mdc-ripple-upgraded::after{\r\n    top: 0;\r\n    left: 0;\r\n    width: 100%;\r\n    width: 100%;\r\n    height: 100%;\r\n    height: 100%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform-origin: center center;\r\n    transform-origin: center center;\r\n    opacity: 0;\n}\n.mdc-button--theme-dark:not(.mdc-ripple-upgraded--unbounded)::after, .mdc-theme--dark .mdc-button:not(.mdc-ripple-upgraded--unbounded)::after{\r\n    -webkit-transform-origin: center center;\r\n    transform-origin: center center;\n}\n.mdc-button--theme-dark.mdc-ripple-upgraded--unbounded::after, .mdc-theme--dark .mdc-button.mdc-ripple-upgraded--unbounded::after{\r\n    top: 0;\r\n    top: 0;\r\n    left: 0;\r\n    left: 0;\r\n    width: 100%;\r\n    width: 100%;\r\n    height: 100%;\r\n    height: 100%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform-origin: center center;\r\n    transform-origin: center center;\n}\n.mdc-button--theme-dark.mdc-ripple-upgraded--foreground-activation::after, .mdc-theme--dark .mdc-button.mdc-ripple-upgraded--foreground-activation::after{\r\n    -webkit-animation: 300ms mdc-ripple-fg-radius-in forwards, 83ms mdc-ripple-fg-opacity-in forwards;\r\n    animation: 300ms mdc-ripple-fg-radius-in forwards, 83ms mdc-ripple-fg-opacity-in forwards;\n}\n.mdc-button--theme-dark.mdc-ripple-upgraded--foreground-deactivation::after, .mdc-theme--dark .mdc-button.mdc-ripple-upgraded--foreground-deactivation::after{\r\n    -webkit-transform: translate(0) scale(1);\r\n    transform: translate(0) scale(1);\r\n    -webkit-animation: 250ms mdc-ripple-fg-opacity-out;\r\n    animation: 250ms mdc-ripple-fg-opacity-out;\n}\n.mdc-button--theme-dark:not(.mdc-ripple-upgraded), .mdc-theme--dark .mdc-button:not(.mdc-ripple-upgraded){\r\n    -webkit-tap-highlight-color: rgba(255, 255, 255, .18);\n}\n.mdc-button.mdc-button--primary{\r\n    --mdc-ripple-surface-width: 0;\r\n    --mdc-ripple-surface-height: 0;\r\n    --mdc-ripple-fg-size: 0;\r\n    --mdc-ripple-left: 0;\r\n    --mdc-ripple-top: 0;\r\n    --mdc-ripple-fg-scale: 1;\r\n    --mdc-ripple-fg-translate-end: 0;\r\n    --mdc-ripple-fg-translate-start: 0;\r\n    will-change: transform, opacity;\r\n    -webkit-tap-highlight-color: transparent;\n}\n.mdc-button.mdc-button--primary:not(.mdc-ripple-upgraded):hover::before, .mdc-button.mdc-button--primary:not(.mdc-ripple-upgraded):focus::before, .mdc-button.mdc-button--primary:not(.mdc-ripple-upgraded):active::after{\r\n    transition-duration: 85ms;\r\n    opacity: .6;\n}\n.mdc-button.mdc-button--primary::before{\r\n    background-color: rgba(63, 81, 181, .12);\r\n    position: absolute;\r\n    top: -50%;\r\n    left: -50%;\r\n    width: 200%;\r\n    height: 200%;\r\n    transition: opacity 250ms linear;\r\n    border-radius: 50%;\r\n    opacity: 0;\r\n    pointer-events: none;\r\n    content: \"\";\n}\n@supports (background-color: color(green a(10%))){\n    .mdc-button.mdc-button--primary::before{\r\n        background-color: rgba(63, 81, 181, .12);\n    }\n}\n.mdc-button.mdc-button--primary.mdc-ripple-upgraded::before{\r\n    top: -50%;\r\n    left: -50%;\r\n    width: 200%;\r\n    height: 200%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\n}\n.mdc-button.mdc-button--primary.mdc-ripple-upgraded--background-focused::before{\r\n    opacity: .99999;\n}\n.mdc-button.mdc-button--primary.mdc-ripple-upgraded--background-active-fill::before{\r\n    transition-duration: 120ms;\r\n    opacity: 1;\n}\n.mdc-button.mdc-button--primary.mdc-ripple-upgraded--unbounded::before{\r\n    top: 0%;\r\n    top: 0%;\r\n    left: 0%;\r\n    left: 0%;\r\n    width: 100%;\r\n    width: 100%;\r\n    height: 100%;\r\n    height: 100%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\n}\n.mdc-button.mdc-button--primary::after{\r\n    background-color: rgba(63, 81, 181, .12);\r\n    position: absolute;\r\n    top: -50%;\r\n    left: -50%;\r\n    width: 200%;\r\n    height: 200%;\r\n    transition: opacity 250ms linear;\r\n    border-radius: 50%;\r\n    opacity: 0;\r\n    pointer-events: none;\r\n    content: \"\";\n}\n@supports (background-color: color(green a(10%))){\n    .mdc-button.mdc-button--primary::after{\r\n        background-color: rgba(63, 81, 181, .12);\n    }\n}\n.mdc-button.mdc-button--primary.mdc-ripple-upgraded::after{\r\n    top: 0;\r\n    left: 0;\r\n    width: 100%;\r\n    width: 100%;\r\n    height: 100%;\r\n    height: 100%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform-origin: center center;\r\n    transform-origin: center center;\r\n    opacity: 0;\n}\n.mdc-button.mdc-button--primary:not(.mdc-ripple-upgraded--unbounded)::after{\r\n    -webkit-transform-origin: center center;\r\n    transform-origin: center center;\n}\n.mdc-button.mdc-button--primary.mdc-ripple-upgraded--unbounded::after{\r\n    top: 0;\r\n    top: 0;\r\n    left: 0;\r\n    left: 0;\r\n    width: 100%;\r\n    width: 100%;\r\n    height: 100%;\r\n    height: 100%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform-origin: center center;\r\n    transform-origin: center center;\n}\n.mdc-button.mdc-button--primary.mdc-ripple-upgraded--foreground-activation::after{\r\n    -webkit-animation: 300ms mdc-ripple-fg-radius-in forwards, 83ms mdc-ripple-fg-opacity-in forwards;\r\n    animation: 300ms mdc-ripple-fg-radius-in forwards, 83ms mdc-ripple-fg-opacity-in forwards;\n}\n.mdc-button.mdc-button--primary.mdc-ripple-upgraded--foreground-deactivation::after{\r\n    -webkit-transform: translate(0) scale(1);\r\n    transform: translate(0) scale(1);\r\n    -webkit-animation: 250ms mdc-ripple-fg-opacity-out;\r\n    animation: 250ms mdc-ripple-fg-opacity-out;\n}\n.mdc-button.mdc-button--accent{\r\n    --mdc-ripple-surface-width: 0;\r\n    --mdc-ripple-surface-height: 0;\r\n    --mdc-ripple-fg-size: 0;\r\n    --mdc-ripple-left: 0;\r\n    --mdc-ripple-top: 0;\r\n    --mdc-ripple-fg-scale: 1;\r\n    --mdc-ripple-fg-translate-end: 0;\r\n    --mdc-ripple-fg-translate-start: 0;\r\n    will-change: transform, opacity;\r\n    -webkit-tap-highlight-color: transparent;\n}\n.mdc-button.mdc-button--accent:not(.mdc-ripple-upgraded):hover::before, .mdc-button.mdc-button--accent:not(.mdc-ripple-upgraded):focus::before, .mdc-button.mdc-button--accent:not(.mdc-ripple-upgraded):active::after{\r\n    transition-duration: 85ms;\r\n    opacity: .6;\n}\n.mdc-button.mdc-button--accent::before{\r\n    background-color: rgba(255, 64, 129, .12);\r\n    position: absolute;\r\n    top: -50%;\r\n    left: -50%;\r\n    width: 200%;\r\n    height: 200%;\r\n    transition: opacity 250ms linear;\r\n    border-radius: 50%;\r\n    opacity: 0;\r\n    pointer-events: none;\r\n    content: \"\";\n}\n@supports (background-color: color(green a(10%))){\n    .mdc-button.mdc-button--accent::before{\r\n        background-color: rgba(255, 64, 129, .12);\n    }\n}\n.mdc-button.mdc-button--accent.mdc-ripple-upgraded::before{\r\n    top: -50%;\r\n    left: -50%;\r\n    width: 200%;\r\n    height: 200%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\n}\n.mdc-button.mdc-button--accent.mdc-ripple-upgraded--background-focused::before{\r\n    opacity: .99999;\n}\n.mdc-button.mdc-button--accent.mdc-ripple-upgraded--background-active-fill::before{\r\n    transition-duration: 120ms;\r\n    opacity: 1;\n}\n.mdc-button.mdc-button--accent.mdc-ripple-upgraded--unbounded::before{\r\n    top: 0%;\r\n    top: 0%;\r\n    left: 0%;\r\n    left: 0%;\r\n    width: 100%;\r\n    width: 100%;\r\n    height: 100%;\r\n    height: 100%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\n}\n.mdc-button.mdc-button--accent::after{\r\n    background-color: rgba(255, 64, 129, .12);\r\n    position: absolute;\r\n    top: -50%;\r\n    left: -50%;\r\n    width: 200%;\r\n    height: 200%;\r\n    transition: opacity 250ms linear;\r\n    border-radius: 50%;\r\n    opacity: 0;\r\n    pointer-events: none;\r\n    content: \"\";\n}\n@supports (background-color: color(green a(10%))){\n    .mdc-button.mdc-button--accent::after{\r\n        background-color: rgba(255, 64, 129, .12);\n    }\n}\n.mdc-button.mdc-button--accent.mdc-ripple-upgraded::after{\r\n    top: 0;\r\n    left: 0;\r\n    width: 100%;\r\n    width: 100%;\r\n    height: 100%;\r\n    height: 100%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform-origin: center center;\r\n    transform-origin: center center;\r\n    opacity: 0;\n}\n.mdc-button.mdc-button--accent:not(.mdc-ripple-upgraded--unbounded)::after{\r\n    -webkit-transform-origin: center center;\r\n    transform-origin: center center;\n}\n.mdc-button.mdc-button--accent.mdc-ripple-upgraded--unbounded::after{\r\n    top: 0;\r\n    top: 0;\r\n    left: 0;\r\n    left: 0;\r\n    width: 100%;\r\n    width: 100%;\r\n    height: 100%;\r\n    height: 100%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform-origin: center center;\r\n    transform-origin: center center;\n}\n.mdc-button.mdc-button--accent.mdc-ripple-upgraded--foreground-activation::after{\r\n    -webkit-animation: 300ms mdc-ripple-fg-radius-in forwards, 83ms mdc-ripple-fg-opacity-in forwards;\r\n    animation: 300ms mdc-ripple-fg-radius-in forwards, 83ms mdc-ripple-fg-opacity-in forwards;\n}\n.mdc-button.mdc-button--accent.mdc-ripple-upgraded--foreground-deactivation::after{\r\n    -webkit-transform: translate(0) scale(1);\r\n    transform: translate(0) scale(1);\r\n    -webkit-animation: 250ms mdc-ripple-fg-opacity-out;\r\n    animation: 250ms mdc-ripple-fg-opacity-out;\n}\n.mdc-button:active{\r\n    outline: none;\n}\n.mdc-button:hover{\r\n    cursor: pointer;\n}\n.mdc-button::-moz-focus-inner{\r\n    padding: 0;\r\n    border: 0;\n}\n.mdc-button--dense{\r\n    height: 32px;\r\n    font-size: .8125rem;\r\n    line-height: 32px;\n}\n.mdc-button--raised{\r\n    box-shadow: 0px 3px 1px -2px rgba(0, 0, 0, .2), 0px 2px 2px 0px rgba(0, 0, 0, .14), 0px 1px 5px 0px rgba(0, 0, 0, .12);\r\n    transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);\r\n    will-change: box-shadow;\r\n    min-width: 88px;\n}\n.mdc-button--raised:active{\r\n    box-shadow: 0px 5px 5px -3px rgba(0, 0, 0, .2), 0px 8px 10px 1px rgba(0, 0, 0, .14), 0px 3px 14px 2px rgba(0, 0, 0, .12);\n}\n.mdc-button--raised.mdc-button--primary{\r\n    --mdc-ripple-surface-width: 0;\r\n    --mdc-ripple-surface-height: 0;\r\n    --mdc-ripple-fg-size: 0;\r\n    --mdc-ripple-left: 0;\r\n    --mdc-ripple-top: 0;\r\n    --mdc-ripple-fg-scale: 1;\r\n    --mdc-ripple-fg-translate-end: 0;\r\n    --mdc-ripple-fg-translate-start: 0;\r\n    will-change: transform, opacity;\r\n    -webkit-tap-highlight-color: transparent;\n}\n.mdc-button--raised.mdc-button--primary:not(.mdc-ripple-upgraded):hover::before, .mdc-button--raised.mdc-button--primary:not(.mdc-ripple-upgraded):focus::before, .mdc-button--raised.mdc-button--primary:not(.mdc-ripple-upgraded):active::after{\r\n    transition-duration: 85ms;\r\n    opacity: .6;\n}\n.mdc-button--raised.mdc-button--primary::before{\r\n    background-color: rgba(255, 255, 255, .14);\r\n    position: absolute;\r\n    top: -50%;\r\n    left: -50%;\r\n    width: 200%;\r\n    height: 200%;\r\n    transition: opacity 250ms linear;\r\n    border-radius: 50%;\r\n    opacity: 0;\r\n    pointer-events: none;\r\n    content: \"\";\n}\n.mdc-button--raised.mdc-button--primary.mdc-ripple-upgraded::before{\r\n    top: -50%;\r\n    left: -50%;\r\n    width: 200%;\r\n    height: 200%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\n}\n.mdc-button--raised.mdc-button--primary.mdc-ripple-upgraded--background-focused::before{\r\n    opacity: .99999;\n}\n.mdc-button--raised.mdc-button--primary.mdc-ripple-upgraded--background-active-fill::before{\r\n    transition-duration: 120ms;\r\n    opacity: 1;\n}\n.mdc-button--raised.mdc-button--primary.mdc-ripple-upgraded--unbounded::before{\r\n    top: 0%;\r\n    top: 0%;\r\n    left: 0%;\r\n    left: 0%;\r\n    width: 100%;\r\n    width: 100%;\r\n    height: 100%;\r\n    height: 100%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\n}\n.mdc-button--raised.mdc-button--primary::after{\r\n    background-color: rgba(255, 255, 255, .14);\r\n    position: absolute;\r\n    top: -50%;\r\n    left: -50%;\r\n    width: 200%;\r\n    height: 200%;\r\n    transition: opacity 250ms linear;\r\n    border-radius: 50%;\r\n    opacity: 0;\r\n    pointer-events: none;\r\n    content: \"\";\n}\n.mdc-button--raised.mdc-button--primary.mdc-ripple-upgraded::after{\r\n    top: 0;\r\n    left: 0;\r\n    width: 100%;\r\n    width: 100%;\r\n    height: 100%;\r\n    height: 100%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform-origin: center center;\r\n    transform-origin: center center;\r\n    opacity: 0;\n}\n.mdc-button--raised.mdc-button--primary:not(.mdc-ripple-upgraded--unbounded)::after{\r\n    -webkit-transform-origin: center center;\r\n    transform-origin: center center;\n}\n.mdc-button--raised.mdc-button--primary.mdc-ripple-upgraded--unbounded::after{\r\n    top: 0;\r\n    top: 0;\r\n    left: 0;\r\n    left: 0;\r\n    width: 100%;\r\n    width: 100%;\r\n    height: 100%;\r\n    height: 100%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform-origin: center center;\r\n    transform-origin: center center;\n}\n.mdc-button--raised.mdc-button--primary.mdc-ripple-upgraded--foreground-activation::after{\r\n    -webkit-animation: 300ms mdc-ripple-fg-radius-in forwards, 83ms mdc-ripple-fg-opacity-in forwards;\r\n    animation: 300ms mdc-ripple-fg-radius-in forwards, 83ms mdc-ripple-fg-opacity-in forwards;\n}\n.mdc-button--raised.mdc-button--primary.mdc-ripple-upgraded--foreground-deactivation::after{\r\n    -webkit-transform: translate(0) scale(1);\r\n    transform: translate(0) scale(1);\r\n    -webkit-animation: 250ms mdc-ripple-fg-opacity-out;\r\n    animation: 250ms mdc-ripple-fg-opacity-out;\n}\n.mdc-button--raised.mdc-button--accent{\r\n    --mdc-ripple-surface-width: 0;\r\n    --mdc-ripple-surface-height: 0;\r\n    --mdc-ripple-fg-size: 0;\r\n    --mdc-ripple-left: 0;\r\n    --mdc-ripple-top: 0;\r\n    --mdc-ripple-fg-scale: 1;\r\n    --mdc-ripple-fg-translate-end: 0;\r\n    --mdc-ripple-fg-translate-start: 0;\r\n    will-change: transform, opacity;\r\n    -webkit-tap-highlight-color: transparent;\n}\n.mdc-button--raised.mdc-button--accent:not(.mdc-ripple-upgraded):hover::before, .mdc-button--raised.mdc-button--accent:not(.mdc-ripple-upgraded):focus::before, .mdc-button--raised.mdc-button--accent:not(.mdc-ripple-upgraded):active::after{\r\n    transition-duration: 85ms;\r\n    opacity: .6;\n}\n.mdc-button--raised.mdc-button--accent::before{\r\n    background-color: rgba(255, 255, 255, .14);\r\n    position: absolute;\r\n    top: -50%;\r\n    left: -50%;\r\n    width: 200%;\r\n    height: 200%;\r\n    transition: opacity 250ms linear;\r\n    border-radius: 50%;\r\n    opacity: 0;\r\n    pointer-events: none;\r\n    content: \"\";\n}\n.mdc-button--raised.mdc-button--accent.mdc-ripple-upgraded::before{\r\n    top: -50%;\r\n    left: -50%;\r\n    width: 200%;\r\n    height: 200%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\n}\n.mdc-button--raised.mdc-button--accent.mdc-ripple-upgraded--background-focused::before{\r\n    opacity: .99999;\n}\n.mdc-button--raised.mdc-button--accent.mdc-ripple-upgraded--background-active-fill::before{\r\n    transition-duration: 120ms;\r\n    opacity: 1;\n}\n.mdc-button--raised.mdc-button--accent.mdc-ripple-upgraded--unbounded::before{\r\n    top: 0%;\r\n    top: 0%;\r\n    left: 0%;\r\n    left: 0%;\r\n    width: 100%;\r\n    width: 100%;\r\n    height: 100%;\r\n    height: 100%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\n}\n.mdc-button--raised.mdc-button--accent::after{\r\n    background-color: rgba(255, 255, 255, .14);\r\n    position: absolute;\r\n    top: -50%;\r\n    left: -50%;\r\n    width: 200%;\r\n    height: 200%;\r\n    transition: opacity 250ms linear;\r\n    border-radius: 50%;\r\n    opacity: 0;\r\n    pointer-events: none;\r\n    content: \"\";\n}\n.mdc-button--raised.mdc-button--accent.mdc-ripple-upgraded::after{\r\n    top: 0;\r\n    left: 0;\r\n    width: 100%;\r\n    width: 100%;\r\n    height: 100%;\r\n    height: 100%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform-origin: center center;\r\n    transform-origin: center center;\r\n    opacity: 0;\n}\n.mdc-button--raised.mdc-button--accent:not(.mdc-ripple-upgraded--unbounded)::after{\r\n    -webkit-transform-origin: center center;\r\n    transform-origin: center center;\n}\n.mdc-button--raised.mdc-button--accent.mdc-ripple-upgraded--unbounded::after{\r\n    top: 0;\r\n    top: 0;\r\n    left: 0;\r\n    left: 0;\r\n    width: 100%;\r\n    width: 100%;\r\n    height: 100%;\r\n    height: 100%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform-origin: center center;\r\n    transform-origin: center center;\n}\n.mdc-button--raised.mdc-button--accent.mdc-ripple-upgraded--foreground-activation::after{\r\n    -webkit-animation: 300ms mdc-ripple-fg-radius-in forwards, 83ms mdc-ripple-fg-opacity-in forwards;\r\n    animation: 300ms mdc-ripple-fg-radius-in forwards, 83ms mdc-ripple-fg-opacity-in forwards;\n}\n.mdc-button--raised.mdc-button--accent.mdc-ripple-upgraded--foreground-deactivation::after{\r\n    -webkit-transform: translate(0) scale(1);\r\n    transform: translate(0) scale(1);\r\n    -webkit-animation: 250ms mdc-ripple-fg-opacity-out;\r\n    animation: 250ms mdc-ripple-fg-opacity-out;\n}\n.mdc-button--theme-dark .mdc-button--raised, .mdc-theme--dark .mdc-button--raised{\r\n    background-color: #3f51b5;\r\n    background-color: #3f51b5;\n}\n.mdc-button--theme-dark .mdc-button--raised::before, .mdc-theme--dark .mdc-button--raised::before{\r\n    color: black;\n}\n.mdc-button--primary{\r\n    color: #3f51b5;\r\n    color: #3f51b5;\n}\n.mdc-button--theme-dark .mdc-button--primary, .mdc-theme--dark .mdc-button--primary{\r\n    color: #3f51b5;\r\n    color: #3f51b5;\n}\n.mdc-button--primary.mdc-button--raised{\r\n    background-color: #3f51b5;\r\n    background-color: #3f51b5;\r\n    color: white;\r\n    color: white;\n}\n.mdc-button--primary.mdc-button--raised::before{\r\n    color: black;\n}\n.mdc-button--accent{\r\n    color: #ff4081;\r\n    color: #ff4081;\n}\n.mdc-button--theme-dark .mdc-button--accent, .mdc-theme--dark .mdc-button--accent{\r\n    color: #ff4081;\r\n    color: #ff4081;\n}\n.mdc-button--accent.mdc-button--raised{\r\n    background-color: #ff4081;\r\n    background-color: #ff4081;\r\n    color: white;\r\n    color: white;\n}\n.mdc-button--accent.mdc-button--raised::before{\r\n    color: black;\n}\n.mdc-button--compact{\r\n    padding: 0 8px;\n}\nfieldset:disabled .mdc-button, .mdc-button:disabled{\r\n    color: rgba(0, 0, 0, .26);\r\n    cursor: default;\r\n    pointer-events: none;\n}\n.mdc-button--theme-dark fieldset:disabled .mdc-button, .mdc-theme--dark fieldset:disabled .mdc-button, .mdc-button--theme-dark .mdc-button:disabled, .mdc-theme--dark .mdc-button:disabled{\r\n    color: rgba(255, 255, 255, .3);\n}\nfieldset:disabled .mdc-button--raised, .mdc-button--raised:disabled{\r\n    box-shadow: 0px 0px 0px 0px rgba(0, 0, 0, .2), 0px 0px 0px 0px rgba(0, 0, 0, .14), 0px 0px 0px 0px rgba(0, 0, 0, .12);\r\n    background-color: rgba(0, 0, 0, .12);\r\n    pointer-events: none;\n}\n.mdc-button--theme-dark fieldset:disabled .mdc-button--raised, .mdc-theme--dark fieldset:disabled .mdc-button--raised, .mdc-button--theme-dark .mdc-button--raised:disabled, .mdc-theme--dark .mdc-button--raised:disabled{\r\n    background-color: rgba(255, 255, 255, .12);\n}\n/*!\n Material Components for the web\n Copyright (c) 2017 Google Inc.\n License: Apache-2.0\n*/\n/*\n  Precomputed linear color channel values, for use in contrast calculations.\n  See https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests\n\n  Algorithm, for c in 0 to 255:\n  f(c) {\n    c = c / 255;\n    return c < 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);\n  }\n\n  This lookup table is needed since there is no `pow` in SASS.\n*/\n/**\n * Calculate the luminance for a color.\n * See https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests\n */\n/**\n * Calculate the contrast ratio between two colors.\n * See https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests\n */\n/**\n * Determine whether to use dark or light text on top of given color.\n * Returns \"dark\" for dark text and \"light\" for light text.\n */\n/*\n  Main theme colors.\n  If you're a user customizing your color scheme in SASS, these are probably the only variables you need to change.\n*/\n/* Indigo 500 */\n/* Pink A200 */\n/* White */\n/* Which set of text colors to use for each main theme color (light or dark) */\n/* Text colors according to light vs dark and text type */\n/* Primary text colors for each of the theme colors */\n/** MDC Ripple keyframes are split into their own file so that _mixins.scss can rely on them. */\n@-webkit-keyframes mdc-ripple-fg-radius-in{\n    from{\r\n        -webkit-transform: translate(0) scale(1);\r\n        transform: translate(0) scale(1);\r\n        -webkit-animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);\r\n        animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);\n    }\n    to{\r\n        -webkit-transform: translate(0) scale(1);\r\n        transform: translate(0) scale(1);\n    }\n}\n@keyframes mdc-ripple-fg-radius-in{\n    from{\r\n        -webkit-transform: translate(0) scale(1);\r\n        transform: translate(0) scale(1);\r\n        -webkit-animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);\r\n        animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);\n    }\n    to{\r\n        -webkit-transform: translate(0) scale(1);\r\n        transform: translate(0) scale(1);\n    }\n}\n@-webkit-keyframes mdc-ripple-fg-opacity-in{\n    from{\r\n        opacity: 0;\r\n        -webkit-animation-timing-function: linear;\r\n        animation-timing-function: linear;\n    }\n    to{\r\n        opacity: 1;\n    }\n}\n@keyframes mdc-ripple-fg-opacity-in{\n    from{\r\n        opacity: 0;\r\n        -webkit-animation-timing-function: linear;\r\n        animation-timing-function: linear;\n    }\n    to{\r\n        opacity: 1;\n    }\n}\n@-webkit-keyframes mdc-ripple-fg-opacity-out{\n    from{\r\n        opacity: 1;\r\n        -webkit-animation-timing-function: linear;\r\n        animation-timing-function: linear;\n    }\n    to{\r\n        opacity: 0;\n    }\n}\n@keyframes mdc-ripple-fg-opacity-out{\n    from{\r\n        opacity: 1;\r\n        -webkit-animation-timing-function: linear;\r\n        animation-timing-function: linear;\n    }\n    to{\r\n        opacity: 0;\n    }\n}\n/**\n * Creates a rule that will be applied when an MDC-Web component is within the context of an RTL layout.\n *\n * Usage Example:\n * ```scss\n * .mdc-foo {\n *   position: absolute;\n *   left: 0;\n *\n *   @include mdc-rtl {\n *     left: auto;\n *     right: 0;\n *   }\n *\n *   &__bar {\n *     margin-left: 4px;\n *     @include mdc-rtl(\".mdc-foo\") {\n *       margin-left: auto;\n *       margin-right: 4px;\n *     }\n *   }\n * }\n *\n * .mdc-foo--mod {\n *   padding-left: 4px;\n *\n *   @include mdc-rtl {\n *     padding-left: auto;\n *     padding-right: 4px;\n *   }\n * }\n * ```\n *\n * Note that this works by checking for [dir=\"rtl\"] on an ancestor element. While this will work\n * in most cases, it will in some cases lead to false negatives, e.g.\n *\n * ```html\n * <html dir=\"rtl\">\n *   <!-- ... -->\n *   <div dir=\"ltr\">\n *     <div class=\"mdc-foo\">Styled incorrectly as RTL!</div>\n *   </div>\n * </html>\n * ```\n *\n * In the future, selectors such as :dir (http://mdn.io/:dir) will help us mitigate this.\n */\n/**\n * Takes a base box-model property - e.g. margin / border / padding - along with a default\n * direction and value, and emits rules which apply the value to the\n * \"<base-property>-<default-direction>\" property by default, but flips the direction\n * when within an RTL context.\n *\n * For example:\n *\n * ```scss\n * .mdc-foo {\n *   @include mdc-rtl-reflexive-box(margin, left, 8px);\n * }\n * ```\n * is equivalent to:\n *\n * ```scss\n * .mdc-foo {\n *   margin-left: 8px;\n *\n *   @include mdc-rtl {\n *     margin-right: 8px;\n *     margin-left: 0;\n *   }\n * }\n * ```\n * whereas:\n *\n * ```scss\n * .mdc-foo {\n *   @include mdc-rtl-reflexive-box(margin, right, 8px);\n * }\n * ```\n * is equivalent to:\n *\n * ```scss\n * .mdc-foo {\n *   margin-right: 8px;\n *\n *   @include mdc-rtl {\n *     margin-right: 0;\n *     margin-left: 8px;\n *   }\n * }\n * ```\n *\n * You can also pass a 4th optional $root-selector argument which will be forwarded to `mdc-rtl`,\n * e.g. `@include mdc-rtl-reflexive-box-property(margin, left, 8px, \".mdc-component\")`.\n *\n * Note that this function will always zero out the original value in an RTL context. If you're\n * trying to flip the values, use mdc-rtl-reflexive-property().\n */\n/**\n * Takes a base property and emits rules that assign <base-property>-left to <left-value> and\n * <base-property>-right to <right-value> in a LTR context, and vice versa in a RTL context.\n * For example:\n *\n * ```scss\n * .mdc-foo {\n *   @include mdc-rtl-reflexive-property(margin, auto, 12px);\n * }\n * ```\n * is equivalent to:\n *\n * ```scss\n * .mdc-foo {\n *   margin-left: auto;\n *   margin-right: 12px;\n *\n *   @include mdc-rtl {\n *     margin-left: 12px;\n *     margin-right: auto;\n *   }\n * }\n * ```\n *\n * A 4th optional $root-selector argument can be given, which will be passed to `mdc-rtl`.\n */\n/**\n * Takes an argument specifying a horizontal position property (either \"left\" or \"right\") as well\n * as a value, and applies that value to the specified position in a LTR context, and flips it in a\n * RTL context. For example:\n *\n * ```scss\n * .mdc-foo {\n *   @include mdc-rtl-reflexive-position(left, 0);\n *   position: absolute;\n * }\n * ```\n * is equivalent to:\n *\n * ```scss\n *  .mdc-foo {\n *    position: absolute;\n *    left: 0;\n *    right: initial;\n *\n *    @include mdc-rtl {\n *      right: 0;\n *      left: initial;\n *    }\n *  }\n * ```\n * An optional third $root-selector argument may also be given, which is passed to `mdc-rtl`.\n */\n/* Manual calculation done on SVG */\n/*\n  Precomputed linear color channel values, for use in contrast calculations.\n  See https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests\n\n  Algorithm, for c in 0 to 255:\n  f(c) {\n    c = c / 255;\n    return c < 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);\n  }\n\n  This lookup table is needed since there is no `pow` in SASS.\n*/\n/**\n * Calculate the luminance for a color.\n * See https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests\n */\n/**\n * Calculate the contrast ratio between two colors.\n * See https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests\n */\n/**\n * Determine whether to use dark or light text on top of given color.\n * Returns \"dark\" for dark text and \"light\" for light text.\n */\n/*\n  Main theme colors.\n  If you're a user customizing your color scheme in SASS, these are probably the only variables you need to change.\n*/\n/* Indigo 500 */\n/* Pink A200 */\n/* White */\n/* Which set of text colors to use for each main theme color (light or dark) */\n/* Text colors according to light vs dark and text type */\n/* Primary text colors for each of the theme colors */\n/**\n * Applies the correct theme color style to the specified property.\n * $property is typically color or background-color, but can be any CSS property that accepts color values.\n * $style should be one of the map keys in $mdc-theme-property-values (_variables.scss).\n */\n/**\n * Creates a rule to be used in MDC-Web components for dark theming, and applies the provided contents.\n * Should provide the $root-selector option if applied to anything other than the root selector.\n * When used with a modifier class, provide a second argument of `true` for the $compound parameter\n * to specify that this should be attached as a compound class.\n *\n * Usage example:\n *\n * ```scss\n * .mdc-foo {\n *   color: black;\n *\n *   @include mdc-theme-dark {\n *     color: white;\n *   }\n *\n *   &__bar {\n *     background: black;\n *\n *     @include mdc-theme-dark(\".mdc-foo\") {\n *       background: white;\n *     }\n *   }\n * }\n *\n * .mdc-foo--disabled {\n *   opacity: .38;\n *\n *   @include mdc-theme-dark(\".mdc-foo\", true) {\n *     opacity: .5;\n *   }\n * }\n * ```\n */\n/* Manual calculation done on SVG */\n@-webkit-keyframes mdc-checkbox-fade-in-background{\n    0%{\r\n        border-color: rgba(0, 0, 0, .54);\r\n        background-color: transparent;\n    }\n    50%{\r\n        border-color: #3f51b5;\r\n        border-color: #3f51b5;\r\n        background-color: #3f51b5;\r\n        background-color: #3f51b5;\n    }\n}\n@keyframes mdc-checkbox-fade-in-background{\n    0%{\r\n        border-color: rgba(0, 0, 0, .54);\r\n        background-color: transparent;\n    }\n    50%{\r\n        border-color: #3f51b5;\r\n        border-color: #3f51b5;\r\n        background-color: #3f51b5;\r\n        background-color: #3f51b5;\n    }\n}\n@-webkit-keyframes mdc-checkbox-fade-out-background{\n    0%, 80%{\r\n        border-color: #3f51b5;\r\n        border-color: #3f51b5;\r\n        background-color: #3f51b5;\r\n        background-color: #3f51b5;\n    }\n    100%{\r\n        border-color: rgba(0, 0, 0, .54);\r\n        background-color: transparent;\n    }\n}\n@keyframes mdc-checkbox-fade-out-background{\n    0%, 80%{\r\n        border-color: #3f51b5;\r\n        border-color: #3f51b5;\r\n        background-color: #3f51b5;\r\n        background-color: #3f51b5;\n    }\n    100%{\r\n        border-color: rgba(0, 0, 0, .54);\r\n        background-color: transparent;\n    }\n}\n@-webkit-keyframes mdc-checkbox-fade-in-background-dark{\n    0%{\r\n        border-color: white;\r\n        background-color: transparent;\n    }\n    50%{\r\n        border-color: #3f51b5;\r\n        border-color: #3f51b5;\r\n        background-color: #3f51b5;\r\n        background-color: #3f51b5;\n    }\n}\n@keyframes mdc-checkbox-fade-in-background-dark{\n    0%{\r\n        border-color: white;\r\n        background-color: transparent;\n    }\n    50%{\r\n        border-color: #3f51b5;\r\n        border-color: #3f51b5;\r\n        background-color: #3f51b5;\r\n        background-color: #3f51b5;\n    }\n}\n@-webkit-keyframes mdc-checkbox-fade-out-background-dark{\n    0%, 80%{\r\n        border-color: #3f51b5;\r\n        border-color: #3f51b5;\r\n        background-color: #3f51b5;\r\n        background-color: #3f51b5;\n    }\n    100%{\r\n        border-color: white;\r\n        background-color: transparent;\n    }\n}\n@keyframes mdc-checkbox-fade-out-background-dark{\n    0%, 80%{\r\n        border-color: #3f51b5;\r\n        border-color: #3f51b5;\r\n        background-color: #3f51b5;\r\n        background-color: #3f51b5;\n    }\n    100%{\r\n        border-color: white;\r\n        background-color: transparent;\n    }\n}\n@-webkit-keyframes mdc-checkbox-unchecked-checked-checkmark-path{\n    0%, 50%{\r\n        stroke-dashoffset: 29.78334;\n    }\n    50%{\r\n        -webkit-animation-timing-function: cubic-bezier(0, 0, 0.2, 1);\r\n        animation-timing-function: cubic-bezier(0, 0, 0.2, 1);\n    }\n    100%{\r\n        stroke-dashoffset: 0;\n    }\n}\n@keyframes mdc-checkbox-unchecked-checked-checkmark-path{\n    0%, 50%{\r\n        stroke-dashoffset: 29.78334;\n    }\n    50%{\r\n        -webkit-animation-timing-function: cubic-bezier(0, 0, 0.2, 1);\r\n        animation-timing-function: cubic-bezier(0, 0, 0.2, 1);\n    }\n    100%{\r\n        stroke-dashoffset: 0;\n    }\n}\n@-webkit-keyframes mdc-checkbox-unchecked-indeterminate-mixedmark{\n    0%, 68.2%{\r\n        -webkit-transform: scaleX(0);\r\n        transform: scaleX(0);\n    }\n    68.2%{\r\n        -webkit-animation-timing-function: cubic-bezier(0, 0, 0, 1);\r\n        animation-timing-function: cubic-bezier(0, 0, 0, 1);\n    }\n    100%{\r\n        -webkit-transform: scaleX(1);\r\n        transform: scaleX(1);\n    }\n}\n@keyframes mdc-checkbox-unchecked-indeterminate-mixedmark{\n    0%, 68.2%{\r\n        -webkit-transform: scaleX(0);\r\n        transform: scaleX(0);\n    }\n    68.2%{\r\n        -webkit-animation-timing-function: cubic-bezier(0, 0, 0, 1);\r\n        animation-timing-function: cubic-bezier(0, 0, 0, 1);\n    }\n    100%{\r\n        -webkit-transform: scaleX(1);\r\n        transform: scaleX(1);\n    }\n}\n@-webkit-keyframes mdc-checkbox-checked-unchecked-checkmark-path{\n    from{\r\n        -webkit-animation-timing-function: cubic-bezier(0.4, 0, 1, 1);\r\n        animation-timing-function: cubic-bezier(0.4, 0, 1, 1);\r\n        opacity: 1;\r\n        stroke-dashoffset: 0;\n    }\n    to{\r\n        opacity: 0;\r\n        stroke-dashoffset: -29.78334;\n    }\n}\n@keyframes mdc-checkbox-checked-unchecked-checkmark-path{\n    from{\r\n        -webkit-animation-timing-function: cubic-bezier(0.4, 0, 1, 1);\r\n        animation-timing-function: cubic-bezier(0.4, 0, 1, 1);\r\n        opacity: 1;\r\n        stroke-dashoffset: 0;\n    }\n    to{\r\n        opacity: 0;\r\n        stroke-dashoffset: -29.78334;\n    }\n}\n@-webkit-keyframes mdc-checkbox-checked-indeterminate-checkmark{\n    from{\r\n        -webkit-transform: rotate(0deg);\r\n        transform: rotate(0deg);\r\n        opacity: 1;\r\n        -webkit-animation-timing-function: cubic-bezier(0, 0, 0.2, 1);\r\n        animation-timing-function: cubic-bezier(0, 0, 0.2, 1);\n    }\n    to{\r\n        -webkit-transform: rotate(45deg);\r\n        transform: rotate(45deg);\r\n        opacity: 0;\n    }\n}\n@keyframes mdc-checkbox-checked-indeterminate-checkmark{\n    from{\r\n        -webkit-transform: rotate(0deg);\r\n        transform: rotate(0deg);\r\n        opacity: 1;\r\n        -webkit-animation-timing-function: cubic-bezier(0, 0, 0.2, 1);\r\n        animation-timing-function: cubic-bezier(0, 0, 0.2, 1);\n    }\n    to{\r\n        -webkit-transform: rotate(45deg);\r\n        transform: rotate(45deg);\r\n        opacity: 0;\n    }\n}\n@-webkit-keyframes mdc-checkbox-indeterminate-checked-checkmark{\n    from{\r\n        -webkit-transform: rotate(45deg);\r\n        transform: rotate(45deg);\r\n        opacity: 0;\r\n        -webkit-animation-timing-function: cubic-bezier(0.14, 0, 0, 1);\r\n        animation-timing-function: cubic-bezier(0.14, 0, 0, 1);\n    }\n    to{\r\n        -webkit-transform: rotate(360deg);\r\n        transform: rotate(360deg);\r\n        opacity: 1;\n    }\n}\n@keyframes mdc-checkbox-indeterminate-checked-checkmark{\n    from{\r\n        -webkit-transform: rotate(45deg);\r\n        transform: rotate(45deg);\r\n        opacity: 0;\r\n        -webkit-animation-timing-function: cubic-bezier(0.14, 0, 0, 1);\r\n        animation-timing-function: cubic-bezier(0.14, 0, 0, 1);\n    }\n    to{\r\n        -webkit-transform: rotate(360deg);\r\n        transform: rotate(360deg);\r\n        opacity: 1;\n    }\n}\n@-webkit-keyframes mdc-checkbox-checked-indeterminate-mixedmark{\n    from{\r\n        -webkit-transform: rotate(-45deg);\r\n        transform: rotate(-45deg);\r\n        opacity: 0;\r\n        -webkit-animation-timing-function: cubic-bezier(0, 0, 0.2, 1);\r\n        animation-timing-function: cubic-bezier(0, 0, 0.2, 1);\n    }\n    to{\r\n        -webkit-transform: rotate(0deg);\r\n        transform: rotate(0deg);\r\n        opacity: 1;\n    }\n}\n@keyframes mdc-checkbox-checked-indeterminate-mixedmark{\n    from{\r\n        -webkit-transform: rotate(-45deg);\r\n        transform: rotate(-45deg);\r\n        opacity: 0;\r\n        -webkit-animation-timing-function: cubic-bezier(0, 0, 0.2, 1);\r\n        animation-timing-function: cubic-bezier(0, 0, 0.2, 1);\n    }\n    to{\r\n        -webkit-transform: rotate(0deg);\r\n        transform: rotate(0deg);\r\n        opacity: 1;\n    }\n}\n@-webkit-keyframes mdc-checkbox-indeterminate-checked-mixedmark{\n    from{\r\n        -webkit-transform: rotate(0deg);\r\n        transform: rotate(0deg);\r\n        opacity: 1;\r\n        -webkit-animation-timing-function: cubic-bezier(0.14, 0, 0, 1);\r\n        animation-timing-function: cubic-bezier(0.14, 0, 0, 1);\n    }\n    to{\r\n        -webkit-transform: rotate(315deg);\r\n        transform: rotate(315deg);\r\n        opacity: 0;\n    }\n}\n@keyframes mdc-checkbox-indeterminate-checked-mixedmark{\n    from{\r\n        -webkit-transform: rotate(0deg);\r\n        transform: rotate(0deg);\r\n        opacity: 1;\r\n        -webkit-animation-timing-function: cubic-bezier(0.14, 0, 0, 1);\r\n        animation-timing-function: cubic-bezier(0.14, 0, 0, 1);\n    }\n    to{\r\n        -webkit-transform: rotate(315deg);\r\n        transform: rotate(315deg);\r\n        opacity: 0;\n    }\n}\n@-webkit-keyframes mdc-checkbox-indeterminate-unchecked-mixedmark{\n    0%{\r\n        -webkit-transform: scaleX(1);\r\n        transform: scaleX(1);\r\n        opacity: 1;\r\n        -webkit-animation-timing-function: linear;\r\n        animation-timing-function: linear;\n    }\n    32.8%, 100%{\r\n        -webkit-transform: scaleX(0);\r\n        transform: scaleX(0);\r\n        opacity: 0;\n    }\n}\n@keyframes mdc-checkbox-indeterminate-unchecked-mixedmark{\n    0%{\r\n        -webkit-transform: scaleX(1);\r\n        transform: scaleX(1);\r\n        opacity: 1;\r\n        -webkit-animation-timing-function: linear;\r\n        animation-timing-function: linear;\n    }\n    32.8%, 100%{\r\n        -webkit-transform: scaleX(0);\r\n        transform: scaleX(0);\r\n        opacity: 0;\n    }\n}\n.mdc-checkbox{\r\n    --mdc-ripple-surface-width: 0;\r\n    --mdc-ripple-surface-height: 0;\r\n    --mdc-ripple-fg-size: 0;\r\n    --mdc-ripple-left: 0;\r\n    --mdc-ripple-top: 0;\r\n    --mdc-ripple-fg-scale: 1;\r\n    --mdc-ripple-fg-translate-end: 0;\r\n    --mdc-ripple-fg-translate-start: 0;\r\n    will-change: transform, opacity;\r\n    -webkit-tap-highlight-color: transparent;\r\n    display: inline-block;\r\n    position: relative;\r\n    box-sizing: content-box;\r\n    -webkit-box-flex: 0;\r\n    -ms-flex: 0 0 18px;\r\n    flex: 0 0 18px;\r\n    width: 18px;\r\n    height: 18px;\r\n    padding: 11px;\r\n    line-height: 0;\r\n    white-space: nowrap;\r\n    cursor: pointer;\r\n    vertical-align: bottom;\n}\n.mdc-checkbox:not(.mdc-ripple-upgraded):hover::before, .mdc-checkbox:not(.mdc-ripple-upgraded):focus::before, .mdc-checkbox:not(.mdc-ripple-upgraded):active::after{\r\n    transition-duration: 85ms;\r\n    opacity: .6;\n}\n.mdc-checkbox::before{\r\n    background-color: rgba(63, 81, 181, .14);\r\n    position: absolute;\r\n    top: -50%;\r\n    left: -50%;\r\n    width: 200%;\r\n    height: 200%;\r\n    transition: opacity 250ms linear;\r\n    border-radius: 50%;\r\n    opacity: 0;\r\n    pointer-events: none;\r\n    content: \"\";\n}\n@supports (background-color: color(green a(10%))){\n    .mdc-checkbox::before{\r\n        background-color: rgba(63, 81, 181, .14);\n    }\n}\n.mdc-checkbox.mdc-ripple-upgraded::before{\r\n    top: -50%;\r\n    left: -50%;\r\n    width: 200%;\r\n    height: 200%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\n}\n.mdc-checkbox.mdc-ripple-upgraded--background-focused::before{\r\n    opacity: .99999;\n}\n.mdc-checkbox.mdc-ripple-upgraded--background-active-fill::before{\r\n    transition-duration: 120ms;\r\n    opacity: 1;\n}\n.mdc-checkbox.mdc-ripple-upgraded--unbounded::before{\r\n    top: 0%;\r\n    top: 0%;\r\n    left: 0%;\r\n    left: 0%;\r\n    width: 100%;\r\n    width: 100%;\r\n    height: 100%;\r\n    height: 100%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\n}\n.mdc-checkbox::after{\r\n    background-color: rgba(63, 81, 181, .14);\r\n    position: absolute;\r\n    top: -50%;\r\n    left: -50%;\r\n    width: 200%;\r\n    height: 200%;\r\n    transition: opacity 250ms linear;\r\n    border-radius: 50%;\r\n    opacity: 0;\r\n    pointer-events: none;\r\n    content: \"\";\n}\n@supports (background-color: color(green a(10%))){\n    .mdc-checkbox::after{\r\n        background-color: rgba(63, 81, 181, .14);\n    }\n}\n.mdc-checkbox.mdc-ripple-upgraded::after{\r\n    top: 0;\r\n    left: 0;\r\n    width: 100%;\r\n    width: 100%;\r\n    height: 100%;\r\n    height: 100%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform-origin: center center;\r\n    transform-origin: center center;\r\n    opacity: 0;\n}\n.mdc-checkbox:not(.mdc-ripple-upgraded--unbounded)::after{\r\n    -webkit-transform-origin: center center;\r\n    transform-origin: center center;\n}\n.mdc-checkbox.mdc-ripple-upgraded--unbounded::after{\r\n    top: 0;\r\n    top: 0;\r\n    left: 0;\r\n    left: 0;\r\n    width: 100%;\r\n    width: 100%;\r\n    height: 100%;\r\n    height: 100%;\r\n    -webkit-transform: scale(0);\r\n    transform: scale(0);\r\n    -webkit-transform-origin: center center;\r\n    transform-origin: center center;\n}\n.mdc-checkbox.mdc-ripple-upgraded--foreground-activation::after{\r\n    -webkit-animation: 300ms mdc-ripple-fg-radius-in forwards, 83ms mdc-ripple-fg-opacity-in forwards;\r\n    animation: 300ms mdc-ripple-fg-radius-in forwards, 83ms mdc-ripple-fg-opacity-in forwards;\n}\n.mdc-checkbox.mdc-ripple-upgraded--foreground-deactivation::after{\r\n    -webkit-transform: translate(0) scale(1);\r\n    transform: translate(0) scale(1);\r\n    -webkit-animation: 250ms mdc-ripple-fg-opacity-out;\r\n    animation: 250ms mdc-ripple-fg-opacity-out;\n}\n.mdc-checkbox::before, .mdc-checkbox::after{\r\n    top: 0;\r\n    left: 0;\r\n    width: 100%;\r\n    height: 100%;\n}\n.mdc-checkbox.mdc-ripple-upgraded--unbounded .mdc-checkbox__background::before{\r\n    content: none;\n}\n.mdc-checkbox__background{\r\n    position: absolute;\r\n    top: 0;\r\n    right: 0;\r\n    bottom: 0;\r\n    left: 0;\r\n    left: 11px;\r\n    right: initial;\r\n    display: -webkit-inline-box;\r\n    display: -ms-inline-flexbox;\r\n    display: inline-flex;\r\n    top: 11px;\r\n    -webkit-box-align: center;\r\n    -ms-flex-align: center;\r\n    align-items: center;\r\n    -webkit-box-pack: center;\r\n    -ms-flex-pack: center;\r\n    justify-content: center;\r\n    box-sizing: border-box;\r\n    pointer-events: none;\r\n    width: 45%;\r\n    height: 45%;\r\n    transition: background-color 90ms 0ms cubic-bezier(0.4, 0, 1, 1), border-color 90ms 0ms cubic-bezier(0.4, 0, 1, 1);\r\n    border: 2px solid rgba(0, 0, 0, .54);\r\n    border-radius: 2px;\r\n    background-color: transparent;\r\n    will-change: background-color, border-color;\n}\n[dir=\"rtl\"] .mdc-checkbox .mdc-checkbox__background, .mdc-checkbox[dir=\"rtl\"] .mdc-checkbox__background{\r\n    left: auto;\r\n    left: initial;\r\n    right: 11px;\n}\n.mdc-checkbox--theme-dark .mdc-checkbox__background, .mdc-theme--dark .mdc-checkbox__background{\r\n    border-color: white;\n}\n.mdc-checkbox__background::before{\r\n    position: absolute;\r\n    top: 0;\r\n    right: 0;\r\n    bottom: 0;\r\n    left: 0;\r\n    width: 100%;\r\n    height: 100%;\r\n    -webkit-transform: scale(0, 0);\r\n    transform: scale(0, 0);\r\n    transition: opacity 90ms 0ms cubic-bezier(0.4, 0, 1, 1), -webkit-transform 90ms 0ms cubic-bezier(0.4, 0, 1, 1);\r\n    transition: opacity 90ms 0ms cubic-bezier(0.4, 0, 1, 1), transform 90ms 0ms cubic-bezier(0.4, 0, 1, 1);\r\n    transition: opacity 90ms 0ms cubic-bezier(0.4, 0, 1, 1), transform 90ms 0ms cubic-bezier(0.4, 0, 1, 1), -webkit-transform 90ms 0ms cubic-bezier(0.4, 0, 1, 1);\r\n    border-radius: 50%;\r\n    content: \"\";\r\n    opacity: 0;\r\n    pointer-events: none;\r\n    will-change: opacity, transform;\r\n    background: #3f51b5;\r\n    background: #3f51b5;\n}\n.mdc-checkbox__native-control{\r\n    position: absolute;\r\n    top: 0;\r\n    left: 0;\r\n    width: 100%;\r\n    height: 100%;\r\n    margin: 0;\r\n    padding: 0;\r\n    cursor: inherit;\r\n    opacity: 0;\n}\n.mdc-checkbox__checkmark{\r\n    position: absolute;\r\n    top: 0;\r\n    right: 0;\r\n    bottom: 0;\r\n    left: 0;\r\n    width: 100%;\r\n    transition: opacity 180ms 0ms cubic-bezier(0.4, 0, 1, 1);\r\n    opacity: 0;\r\n    fill: white;\n}\n.mdc-checkbox__checkmark__path{\r\n    transition: stroke-dashoffset 180ms 0ms cubic-bezier(0.4, 0, 1, 1);\r\n    stroke: white !important;\r\n    stroke-width: 3.12px;\r\n    stroke-dashoffset: 29.78334;\r\n    stroke-dasharray: 29.78334;\n}\n.mdc-checkbox__mixedmark{\r\n    width: 100%;\r\n    height: 2px;\r\n    -webkit-transform: scaleX(0) rotate(0deg);\r\n    transform: scaleX(0) rotate(0deg);\r\n    transition: opacity 90ms 0ms cubic-bezier(0.4, 0, 1, 1), -webkit-transform 90ms 0ms cubic-bezier(0.4, 0, 1, 1);\r\n    transition: opacity 90ms 0ms cubic-bezier(0.4, 0, 1, 1), transform 90ms 0ms cubic-bezier(0.4, 0, 1, 1);\r\n    transition: opacity 90ms 0ms cubic-bezier(0.4, 0, 1, 1), transform 90ms 0ms cubic-bezier(0.4, 0, 1, 1), -webkit-transform 90ms 0ms cubic-bezier(0.4, 0, 1, 1);\r\n    background-color: white;\r\n    opacity: 0;\n}\n.mdc-checkbox__native-control:focus ~ .mdc-checkbox__background::before{\r\n    -webkit-transform: scale(2.75, 2.75);\r\n    transform: scale(2.75, 2.75);\r\n    transition: opacity 80ms 0ms cubic-bezier(0, 0, 0.2, 1), -webkit-transform 80ms 0ms cubic-bezier(0, 0, 0.2, 1);\r\n    transition: opacity 80ms 0ms cubic-bezier(0, 0, 0.2, 1), transform 80ms 0ms cubic-bezier(0, 0, 0.2, 1);\r\n    transition: opacity 80ms 0ms cubic-bezier(0, 0, 0.2, 1), transform 80ms 0ms cubic-bezier(0, 0, 0.2, 1), -webkit-transform 80ms 0ms cubic-bezier(0, 0, 0.2, 1);\r\n    opacity: .26;\n}\n.mdc-checkbox__native-control:checked ~ .mdc-checkbox__background{\r\n    transition: border-color 90ms 0ms cubic-bezier(0, 0, 0.2, 1), background-color 90ms 0ms cubic-bezier(0, 0, 0.2, 1);\r\n    border-color: #3f51b5;\r\n    border-color: #3f51b5;\r\n    background-color: #3f51b5;\r\n    background-color: #3f51b5;\n}\n.mdc-checkbox__native-control:checked ~ .mdc-checkbox__background .mdc-checkbox__checkmark{\r\n    transition: opacity 180ms 0ms cubic-bezier(0, 0, 0.2, 1), -webkit-transform 180ms 0ms cubic-bezier(0, 0, 0.2, 1);\r\n    transition: opacity 180ms 0ms cubic-bezier(0, 0, 0.2, 1), transform 180ms 0ms cubic-bezier(0, 0, 0.2, 1);\r\n    transition: opacity 180ms 0ms cubic-bezier(0, 0, 0.2, 1), transform 180ms 0ms cubic-bezier(0, 0, 0.2, 1), -webkit-transform 180ms 0ms cubic-bezier(0, 0, 0.2, 1);\r\n    opacity: 1;\n}\n.mdc-checkbox__native-control:checked ~ .mdc-checkbox__background .mdc-checkbox__checkmark__path{\r\n    stroke-dashoffset: 0;\n}\n.mdc-checkbox__native-control:checked ~ .mdc-checkbox__background .mdc-checkbox__mixedmark{\r\n    -webkit-transform: scaleX(1) rotate(-45deg);\r\n    transform: scaleX(1) rotate(-45deg);\n}\n.mdc-checkbox__native-control:indeterminate ~ .mdc-checkbox__background{\r\n    border-color: #3f51b5;\r\n    border-color: #3f51b5;\r\n    background-color: #3f51b5;\r\n    background-color: #3f51b5;\n}\n.mdc-checkbox__native-control:indeterminate ~ .mdc-checkbox__background .mdc-checkbox__checkmark{\r\n    -webkit-transform: rotate(45deg);\r\n    transform: rotate(45deg);\r\n    transition: opacity 90ms 0ms cubic-bezier(0.4, 0, 1, 1), -webkit-transform 90ms 0ms cubic-bezier(0.4, 0, 1, 1);\r\n    transition: opacity 90ms 0ms cubic-bezier(0.4, 0, 1, 1), transform 90ms 0ms cubic-bezier(0.4, 0, 1, 1);\r\n    transition: opacity 90ms 0ms cubic-bezier(0.4, 0, 1, 1), transform 90ms 0ms cubic-bezier(0.4, 0, 1, 1), -webkit-transform 90ms 0ms cubic-bezier(0.4, 0, 1, 1);\r\n    opacity: 0;\n}\n.mdc-checkbox__native-control:indeterminate ~ .mdc-checkbox__background .mdc-checkbox__checkmark__path{\r\n    stroke-dashoffset: 0;\n}\n.mdc-checkbox__native-control:indeterminate ~ .mdc-checkbox__background .mdc-checkbox__mixedmark{\r\n    -webkit-transform: scaleX(1) rotate(0deg);\r\n    transform: scaleX(1) rotate(0deg);\r\n    opacity: 1;\n}\n.mdc-checkbox__native-control:disabled, fieldset:disabled .mdc-checkbox__native-control, [aria-disabled=\"true\"] .mdc-checkbox__native-control{\r\n    cursor: default;\n}\n.mdc-checkbox__native-control:disabled ~ .mdc-checkbox__background, fieldset:disabled .mdc-checkbox__native-control ~ .mdc-checkbox__background, [aria-disabled=\"true\"] .mdc-checkbox__native-control ~ .mdc-checkbox__background{\r\n    border-color: rgba(0, 0, 0, .26);\n}\n.mdc-checkbox--theme-dark .mdc-checkbox__native-control:disabled ~ .mdc-checkbox__background, .mdc-theme--dark .mdc-checkbox__native-control:disabled ~ .mdc-checkbox__background, .mdc-checkbox--theme-dark\n    fieldset:disabled .mdc-checkbox__native-control ~ .mdc-checkbox__background, .mdc-theme--dark\n    fieldset:disabled .mdc-checkbox__native-control ~ .mdc-checkbox__background, .mdc-checkbox--theme-dark\n    [aria-disabled=\"true\"] .mdc-checkbox__native-control ~ .mdc-checkbox__background, .mdc-theme--dark\n    [aria-disabled=\"true\"] .mdc-checkbox__native-control ~ .mdc-checkbox__background{\r\n    border-color: rgba(255, 255, 255, .3);\n}\n.mdc-checkbox__native-control:disabled:checked ~ .mdc-checkbox__background, .mdc-checkbox__native-control:disabled:indeterminate ~ .mdc-checkbox__background, fieldset:disabled .mdc-checkbox__native-control:checked ~ .mdc-checkbox__background, fieldset:disabled .mdc-checkbox__native-control:indeterminate ~ .mdc-checkbox__background, [aria-disabled=\"true\"] .mdc-checkbox__native-control:checked ~ .mdc-checkbox__background, [aria-disabled=\"true\"] .mdc-checkbox__native-control:indeterminate ~ .mdc-checkbox__background{\r\n    border-color: transparent;\r\n    background-color: rgba(0, 0, 0, .26);\n}\n.mdc-checkbox--theme-dark .mdc-checkbox__native-control:disabled:checked ~ .mdc-checkbox__background, .mdc-theme--dark .mdc-checkbox__native-control:disabled:checked ~ .mdc-checkbox__background, .mdc-checkbox--theme-dark .mdc-checkbox__native-control:disabled:indeterminate ~ .mdc-checkbox__background, .mdc-theme--dark .mdc-checkbox__native-control:disabled:indeterminate ~ .mdc-checkbox__background, .mdc-checkbox--theme-dark\n    fieldset:disabled .mdc-checkbox__native-control:checked ~ .mdc-checkbox__background, .mdc-theme--dark\n    fieldset:disabled .mdc-checkbox__native-control:checked ~ .mdc-checkbox__background, .mdc-checkbox--theme-dark\n    fieldset:disabled .mdc-checkbox__native-control:indeterminate ~ .mdc-checkbox__background, .mdc-theme--dark\n    fieldset:disabled .mdc-checkbox__native-control:indeterminate ~ .mdc-checkbox__background, .mdc-checkbox--theme-dark\n    [aria-disabled=\"true\"] .mdc-checkbox__native-control:checked ~ .mdc-checkbox__background, .mdc-theme--dark\n    [aria-disabled=\"true\"] .mdc-checkbox__native-control:checked ~ .mdc-checkbox__background, .mdc-checkbox--theme-dark\n    [aria-disabled=\"true\"] .mdc-checkbox__native-control:indeterminate ~ .mdc-checkbox__background, .mdc-theme--dark\n    [aria-disabled=\"true\"] .mdc-checkbox__native-control:indeterminate ~ .mdc-checkbox__background{\r\n    background-color: rgba(255, 255, 255, .3);\n}\n.mdc-checkbox--disabled{\r\n    cursor: default;\r\n    pointer-events: none;\n}\n.mdc-checkbox--upgraded .mdc-checkbox__background, .mdc-checkbox--upgraded .mdc-checkbox__checkmark, .mdc-checkbox--upgraded .mdc-checkbox__checkmark__path, .mdc-checkbox--upgraded .mdc-checkbox__mixedmark{\r\n    transition: none !important;\n}\n.mdc-checkbox--anim-unchecked-checked .mdc-checkbox__background, .mdc-checkbox--anim-unchecked-indeterminate .mdc-checkbox__background{\r\n    -webkit-animation: mdc-checkbox-fade-in-background 180ms linear;\r\n    animation: mdc-checkbox-fade-in-background 180ms linear;\n}\n.mdc-checkbox--theme-dark .mdc-checkbox--anim-unchecked-checked .mdc-checkbox__background, .mdc-theme--dark .mdc-checkbox--anim-unchecked-checked .mdc-checkbox__background, .mdc-checkbox--theme-dark .mdc-checkbox--anim-unchecked-indeterminate .mdc-checkbox__background, .mdc-theme--dark .mdc-checkbox--anim-unchecked-indeterminate .mdc-checkbox__background{\r\n    -webkit-animation-name: mdc-checkbox-fade-in-background-dark;\r\n    animation-name: mdc-checkbox-fade-in-background-dark;\n}\n.mdc-checkbox--anim-checked-unchecked .mdc-checkbox__background, .mdc-checkbox--anim-indeterminate-unchecked .mdc-checkbox__background{\r\n    -webkit-animation: mdc-checkbox-fade-out-background 180ms linear;\r\n    animation: mdc-checkbox-fade-out-background 180ms linear;\n}\n.mdc-checkbox--theme-dark .mdc-checkbox--anim-checked-unchecked .mdc-checkbox__background, .mdc-theme--dark .mdc-checkbox--anim-checked-unchecked .mdc-checkbox__background, .mdc-checkbox--theme-dark .mdc-checkbox--anim-indeterminate-unchecked .mdc-checkbox__background, .mdc-theme--dark .mdc-checkbox--anim-indeterminate-unchecked .mdc-checkbox__background{\r\n    -webkit-animation-name: mdc-checkbox-fade-out-background-dark;\r\n    animation-name: mdc-checkbox-fade-out-background-dark;\n}\n.mdc-checkbox--anim-unchecked-checked .mdc-checkbox__checkmark__path{\r\n    -webkit-animation: 180ms linear 0s mdc-checkbox-unchecked-checked-checkmark-path;\r\n    animation: 180ms linear 0s mdc-checkbox-unchecked-checked-checkmark-path;\r\n    transition: none;\n}\n.mdc-checkbox--anim-unchecked-indeterminate .mdc-checkbox__mixedmark{\r\n    -webkit-animation: 90ms linear 0s mdc-checkbox-unchecked-indeterminate-mixedmark;\r\n    animation: 90ms linear 0s mdc-checkbox-unchecked-indeterminate-mixedmark;\r\n    transition: none;\n}\n.mdc-checkbox--anim-checked-unchecked .mdc-checkbox__checkmark__path{\r\n    -webkit-animation: 90ms linear 0s mdc-checkbox-checked-unchecked-checkmark-path;\r\n    animation: 90ms linear 0s mdc-checkbox-checked-unchecked-checkmark-path;\r\n    transition: none;\n}\n.mdc-checkbox--anim-checked-indeterminate .mdc-checkbox__checkmark{\r\n    -webkit-animation: 90ms linear 0s mdc-checkbox-checked-indeterminate-checkmark;\r\n    animation: 90ms linear 0s mdc-checkbox-checked-indeterminate-checkmark;\r\n    transition: none;\n}\n.mdc-checkbox--anim-checked-indeterminate .mdc-checkbox__mixedmark{\r\n    -webkit-animation: 90ms linear 0s mdc-checkbox-checked-indeterminate-mixedmark;\r\n    animation: 90ms linear 0s mdc-checkbox-checked-indeterminate-mixedmark;\r\n    transition: none;\n}\n.mdc-checkbox--anim-indeterminate-checked .mdc-checkbox__checkmark{\r\n    -webkit-animation: 500ms linear 0s mdc-checkbox-indeterminate-checked-checkmark;\r\n    animation: 500ms linear 0s mdc-checkbox-indeterminate-checked-checkmark;\r\n    transition: none;\n}\n.mdc-checkbox--anim-indeterminate-checked .mdc-checkbox__mixedmark{\r\n    -webkit-animation: 500ms linear 0s mdc-checkbox-indeterminate-checked-mixedmark;\r\n    animation: 500ms linear 0s mdc-checkbox-indeterminate-checked-mixedmark;\r\n    transition: none;\n}\n.mdc-checkbox--anim-indeterminate-unchecked .mdc-checkbox__mixedmark{\r\n    -webkit-animation: 300ms linear 0s mdc-checkbox-indeterminate-unchecked-mixedmark;\r\n    animation: 300ms linear 0s mdc-checkbox-indeterminate-unchecked-mixedmark;\r\n    transition: none;\n}\n/*!\n Material Components for the web\n Copyright (c) 2017 Google Inc.\n License: Apache-2.0\n*/\n/**\n * Creates a rule that will be applied when an MDC-Web component is within the context of an RTL layout.\n *\n * Usage Example:\n * ```scss\n * .mdc-foo {\n *   position: absolute;\n *   left: 0;\n *\n *   @include mdc-rtl {\n *     left: auto;\n *     right: 0;\n *   }\n *\n *   &__bar {\n *     margin-left: 4px;\n *     @include mdc-rtl(\".mdc-foo\") {\n *       margin-left: auto;\n *       margin-right: 4px;\n *     }\n *   }\n * }\n *\n * .mdc-foo--mod {\n *   padding-left: 4px;\n *\n *   @include mdc-rtl {\n *     padding-left: auto;\n *     padding-right: 4px;\n *   }\n * }\n * ```\n *\n * Note that this works by checking for [dir=\"rtl\"] on an ancestor element. While this will work\n * in most cases, it will in some cases lead to false negatives, e.g.\n *\n * ```html\n * <html dir=\"rtl\">\n *   <!-- ... -->\n *   <div dir=\"ltr\">\n *     <div class=\"mdc-foo\">Styled incorrectly as RTL!</div>\n *   </div>\n * </html>\n * ```\n *\n * In the future, selectors such as :dir (http://mdn.io/:dir) will help us mitigate this.\n */\n/**\n * Takes a base box-model property - e.g. margin / border / padding - along with a default\n * direction and value, and emits rules which apply the value to the\n * \"<base-property>-<default-direction>\" property by default, but flips the direction\n * when within an RTL context.\n *\n * For example:\n *\n * ```scss\n * .mdc-foo {\n *   @include mdc-rtl-reflexive-box(margin, left, 8px);\n * }\n * ```\n * is equivalent to:\n *\n * ```scss\n * .mdc-foo {\n *   margin-left: 8px;\n *\n *   @include mdc-rtl {\n *     margin-right: 8px;\n *     margin-left: 0;\n *   }\n * }\n * ```\n * whereas:\n *\n * ```scss\n * .mdc-foo {\n *   @include mdc-rtl-reflexive-box(margin, right, 8px);\n * }\n * ```\n * is equivalent to:\n *\n * ```scss\n * .mdc-foo {\n *   margin-right: 8px;\n *\n *   @include mdc-rtl {\n *     margin-right: 0;\n *     margin-left: 8px;\n *   }\n * }\n * ```\n *\n * You can also pass a 4th optional $root-selector argument which will be forwarded to `mdc-rtl`,\n * e.g. `@include mdc-rtl-reflexive-box-property(margin, left, 8px, \".mdc-component\")`.\n *\n * Note that this function will always zero out the original value in an RTL context. If you're\n * trying to flip the values, use mdc-rtl-reflexive-property().\n */\n/**\n * Takes a base property and emits rules that assign <base-property>-left to <left-value> and\n * <base-property>-right to <right-value> in a LTR context, and vice versa in a RTL context.\n * For example:\n *\n * ```scss\n * .mdc-foo {\n *   @include mdc-rtl-reflexive-property(margin, auto, 12px);\n * }\n * ```\n * is equivalent to:\n *\n * ```scss\n * .mdc-foo {\n *   margin-left: auto;\n *   margin-right: 12px;\n *\n *   @include mdc-rtl {\n *     margin-left: 12px;\n *     margin-right: auto;\n *   }\n * }\n * ```\n *\n * A 4th optional $root-selector argument can be given, which will be passed to `mdc-rtl`.\n */\n/**\n * Takes an argument specifying a horizontal position property (either \"left\" or \"right\") as well\n * as a value, and applies that value to the specified position in a LTR context, and flips it in a\n * RTL context. For example:\n *\n * ```scss\n * .mdc-foo {\n *   @include mdc-rtl-reflexive-position(left, 0);\n *   position: absolute;\n * }\n * ```\n * is equivalent to:\n *\n * ```scss\n *  .mdc-foo {\n *    position: absolute;\n *    left: 0;\n *    right: initial;\n *\n *    @include mdc-rtl {\n *      right: 0;\n *      left: initial;\n *    }\n *  }\n * ```\n * An optional third $root-selector argument may also be given, which is passed to `mdc-rtl`.\n */\n/*\n  Precomputed linear color channel values, for use in contrast calculations.\n  See https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests\n\n  Algorithm, for c in 0 to 255:\n  f(c) {\n    c = c / 255;\n    return c < 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);\n  }\n\n  This lookup table is needed since there is no `pow` in SASS.\n*/\n/**\n * Calculate the luminance for a color.\n * See https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests\n */\n/**\n * Calculate the contrast ratio between two colors.\n * See https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests\n */\n/**\n * Determine whether to use dark or light text on top of given color.\n * Returns \"dark\" for dark text and \"light\" for light text.\n */\n/*\n  Main theme colors.\n  If you're a user customizing your color scheme in SASS, these are probably the only variables you need to change.\n*/\n/* Indigo 500 */\n/* Pink A200 */\n/* White */\n/* Which set of text colors to use for each main theme color (light or dark) */\n/* Text colors according to light vs dark and text type */\n/* Primary text colors for each of the theme colors */\n/**\n * Applies the correct theme color style to the specified property.\n * $property is typically color or background-color, but can be any CSS property that accepts color values.\n * $style should be one of the map keys in $mdc-theme-property-values (_variables.scss).\n */\n/**\n * Creates a rule to be used in MDC-Web components for dark theming, and applies the provided contents.\n * Should provide the $root-selector option if applied to anything other than the root selector.\n * When used with a modifier class, provide a second argument of `true` for the $compound parameter\n * to specify that this should be attached as a compound class.\n *\n * Usage example:\n *\n * ```scss\n * .mdc-foo {\n *   color: black;\n *\n *   @include mdc-theme-dark {\n *     color: white;\n *   }\n *\n *   &__bar {\n *     background: black;\n *\n *     @include mdc-theme-dark(\".mdc-foo\") {\n *       background: white;\n *     }\n *   }\n * }\n *\n * .mdc-foo--disabled {\n *   opacity: .38;\n *\n *   @include mdc-theme-dark(\".mdc-foo\", true) {\n *     opacity: .5;\n *   }\n * }\n * ```\n */\n/* TODO(sgomes): Figure out what to do about desktop font sizes. */\n/* TODO(sgomes): Figure out what to do about i18n and i18n font sizes. */\n.mdc-grid-list .mdc-grid-tile__primary{\r\n    padding-bottom: 100%;\n}\n.mdc-grid-list .mdc-grid-tile{\r\n    margin: 2px 0;\r\n    padding: 0 2px;\n}\n.mdc-grid-list .mdc-grid-tile__secondary{\r\n    left: 2px;\r\n    width: calc(100% - 4px);\n}\n.mdc-grid-list .mdc-grid-list__tiles{\r\n    margin: 2px auto;\n}\n.mdc-grid-list__tiles{\r\n    display: -webkit-box;\r\n    display: -ms-flexbox;\r\n    display: flex;\r\n    -webkit-box-orient: horizontal;\r\n    -webkit-box-direction: normal;\r\n    -ms-flex-direction: row;\r\n    flex-direction: row;\r\n    -ms-flex-wrap: wrap;\r\n    flex-wrap: wrap;\r\n    margin: 0;\r\n    padding: 0;\n}\n.mdc-grid-list--tile-gutter-1 .mdc-grid-tile{\r\n    margin: 0.5px 0;\r\n    padding: 0 0.5px;\n}\n.mdc-grid-list--tile-gutter-1 .mdc-grid-tile__secondary{\r\n    left: 0.5px;\r\n    width: calc(100% - 1px);\n}\n.mdc-grid-list--tile-gutter-1 .mdc-grid-list__tiles{\r\n    margin: 0.5px auto;\n}\n.mdc-grid-list--tile-aspect-16x9 .mdc-grid-tile__primary{\r\n    padding-bottom: 56.24993%;\n}\n.mdc-grid-list--tile-aspect-3x2 .mdc-grid-tile__primary{\r\n    padding-bottom: 66.66667%;\n}\n.mdc-grid-list--tile-aspect-2x3 .mdc-grid-tile__primary{\r\n    padding-bottom: 149.99925%;\n}\n.mdc-grid-list--tile-aspect-4x3 .mdc-grid-tile__primary{\r\n    padding-bottom: 75.00019%;\n}\n.mdc-grid-list--tile-aspect-3x4 .mdc-grid-tile__primary{\r\n    padding-bottom: 133.33333%;\n}\n.mdc-grid-list--twoline-caption .mdc-grid-tile__secondary{\r\n    height: 68px;\n}\n.mdc-grid-list--header-caption .mdc-grid-tile__secondary{\r\n    top: 0;\r\n    bottom: auto;\n}\n.mdc-grid-list--with-icon-align-start .mdc-grid-tile__secondary{\r\n    padding-left: 56px;\r\n    padding-right: 8px;\n}\n[dir=\"rtl\"] .mdc-grid-list .mdc-grid-list--with-icon-align-start .mdc-grid-tile__secondary, .mdc-grid-list[dir=\"rtl\"] .mdc-grid-list--with-icon-align-start .mdc-grid-tile__secondary{\r\n    padding-left: 8px;\r\n    padding-right: 56px;\n}\n.mdc-grid-list--with-icon-align-start .mdc-grid-tile__icon{\r\n    left: 16px;\r\n    right: auto;\r\n    right: initial;\r\n    font-size: 24px;\n}\n[dir=\"rtl\"] .mdc-grid-list .mdc-grid-list--with-icon-align-start .mdc-grid-tile__icon, .mdc-grid-list[dir=\"rtl\"] .mdc-grid-list--with-icon-align-start .mdc-grid-tile__icon{\r\n    left: auto;\r\n    left: initial;\r\n    right: 16px;\n}\n.mdc-grid-list--with-icon-align-end .mdc-grid-tile__secondary{\r\n    padding-left: 16px;\r\n    padding-right: 56px;\n}\n[dir=\"rtl\"] .mdc-grid-list .mdc-grid-list--with-icon-align-end .mdc-grid-tile__secondary, .mdc-grid-list[dir=\"rtl\"] .mdc-grid-list--with-icon-align-end .mdc-grid-tile__secondary{\r\n    padding-left: 56px;\r\n    padding-right: 16px;\n}\n.mdc-grid-list--with-icon-align-end .mdc-grid-tile__icon{\r\n    left: auto;\r\n    left: initial;\r\n    right: 16px;\r\n    font-size: 24px;\n}\n[dir=\"rtl\"] .mdc-grid-list .mdc-grid-list--with-icon-align-end .mdc-grid-tile__icon, .mdc-grid-list[dir=\"rtl\"] .mdc-grid-list--with-icon-align-end .mdc-grid-tile__icon{\r\n    left: 16px;\r\n    right: auto;\r\n    right: initial;\n}\n.mdc-grid-tile{\r\n    display: block;\r\n    position: relative;\r\n    width: 200px;\n}\n.mdc-grid-tile__primary{\r\n    position: relative;\r\n    height: 0;\r\n    background-color: #fff;\r\n    background-color: #fff;\r\n    color: rgba(0, 0, 0, .87);\r\n    color: rgba(0, 0, 0, .87);\n}\n.mdc-grid-tile__primary-content{\r\n    position: absolute;\r\n    top: 0;\r\n    right: 0;\r\n    bottom: 0;\r\n    left: 0;\r\n    width: 100%;\r\n    height: 100%;\r\n    background-repeat: no-repeat;\r\n    background-position: center;\r\n    background-size: cover;\n}\n.mdc-grid-tile__secondary{\r\n    position: absolute;\r\n    box-sizing: border-box;\r\n    bottom: 0;\r\n    height: 48px;\r\n    padding: 16px;\r\n    background-color: #3f51b5;\r\n    background-color: #3f51b5;\r\n    color: white;\r\n    color: white;\n}\n.mdc-grid-tile__title{\r\n    display: block;\r\n    margin: 0;\r\n    padding: 0;\r\n    font-size: 1rem;\r\n    font-weight: 500;\r\n    line-height: 1rem;\r\n    text-overflow: ellipsis;\r\n    white-space: nowrap;\r\n    overflow: hidden;\n}\n.mdc-grid-tile__support-text{\r\n    font-family: Roboto, sans-serif;\r\n    -moz-osx-font-smoothing: grayscale;\r\n    -webkit-font-smoothing: antialiased;\r\n    font-size: 0.875rem;\r\n    font-weight: 400;\r\n    letter-spacing: 0.04em;\r\n    line-height: 1.25rem;\r\n    display: block;\r\n    margin: 0;\r\n    margin-top: 4px;\r\n    padding: 0;\n}\n.mdc-grid-tile__icon{\r\n    position: absolute;\r\n    top: calc(50% - 24px / 2);\r\n    font-size: 0;\n}\nbody {\r\n    font-family: 'Roboto', sans-serif;\n}\n.searchArea {\r\n    width: 100%;\r\n    padding: 20px 10px;\r\n    text-align: center;\n}\n.mdc-grid-list .mdc-grid-tile {\r\n    margin: 10px;\n}\n.completed section.mdc-grid-tile__primary {\r\n    background: gray !important;\r\n    color: gray !important;\n}\n.completed section.mdc-grid-tile__secondary {\r\n    background: #545353 !important;\r\n    color: #545353 !important;\n}\n.mdc-grid-tile__secondary {\r\n    height: 35% !important;\r\n    background-color: #e44c4c !important;\n}\n.mdc-checkbox {\r\n    background: #fff;\r\n    padding: 0;\r\n    margin: 9px;\r\n    border: 2px solid #828282;\r\n    border-radius: 50%;\r\n    transition: 300ms ease-in-out;\n}\n.completed .mdc-checkbox {\r\n    background: rgb(177, 170, 170);\n}\n.completed .mdc-button::before {\r\n    background-color: rgba(0, 0, 0, .6);\n}\n.mdc-button::before {\r\n    background-color: rgba(255, 255, 255, .3);\n}\n.mdc-card__title {\r\n    text-align: center;\r\n    font-size: 20px;\r\n    font-weight: 300;\r\n    margin-bottom: 10px;\n}\n.mdc-card__supporting-text {\r\n    background: rgba(228, 76, 76, .5);\n}\n.completed .todoDescription.mdc-card__supporting-text {\r\n    background: none;\n}\n.add-todo {\r\n    padding: 30px 50px;\r\n    background-color: rgba(236, 235, 235, .4);\r\n    color: #e44c4c;\r\n    font-size: 30px;\r\n    box-shadow: 2px 2px 5px rgba(214, 207, 207, .35);\n}\n.mdc-textfield:not(.mdc-textfield--upgraded) .mdc-textfield__input:focus {\r\n    border-color: #e44c4c;\n}\n.mdc-checkbox label {\r\n    display: block;\r\n    margin-top: 28px;\r\n    font-size: 12px;\n}\nbutton.mdc-grid-tile__secondary-content.mdc-button {\r\n    float: right;\r\n    margin-top: 5px;\n}\n.completed .mdc-checkbox label {\r\n    color: #9e9e9e;\n}", ""]);
+
+// exports
+
+
+/***/ }),
+/* 57 */
+/***/ (function(module, exports) {
+
+/*
+	MIT License http://www.opensource.org/licenses/mit-license.php
+	Author Tobias Koppers @sokra
+*/
+// css base code, injected by the css-loader
+module.exports = function(useSourceMap) {
+	var list = [];
+
+	// return the list of modules as css string
+	list.toString = function toString() {
+		return this.map(function (item) {
+			var content = cssWithMappingToString(item, useSourceMap);
+			if(item[2]) {
+				return "@media " + item[2] + "{" + content + "}";
+			} else {
+				return content;
+			}
+		}).join("");
+	};
+
+	// import a list of modules into the list
+	list.i = function(modules, mediaQuery) {
+		if(typeof modules === "string")
+			modules = [[null, modules, ""]];
+		var alreadyImportedModules = {};
+		for(var i = 0; i < this.length; i++) {
+			var id = this[i][0];
+			if(typeof id === "number")
+				alreadyImportedModules[id] = true;
+		}
+		for(i = 0; i < modules.length; i++) {
+			var item = modules[i];
+			// skip already imported module
+			// this implementation is not 100% perfect for weird media query combinations
+			//  when a module is imported multiple times with different media queries.
+			//  I hope this will never occur (Hey this way we have smaller bundles)
+			if(typeof item[0] !== "number" || !alreadyImportedModules[item[0]]) {
+				if(mediaQuery && !item[2]) {
+					item[2] = mediaQuery;
+				} else if(mediaQuery) {
+					item[2] = "(" + item[2] + ") and (" + mediaQuery + ")";
+				}
+				list.push(item);
+			}
+		}
+	};
+	return list;
+};
+
+function cssWithMappingToString(item, useSourceMap) {
+	var content = item[1] || '';
+	var cssMapping = item[3];
+	if (!cssMapping) {
+		return content;
+	}
+
+	if (useSourceMap && typeof btoa === 'function') {
+		var sourceMapping = toComment(cssMapping);
+		var sourceURLs = cssMapping.sources.map(function (source) {
+			return '/*# sourceURL=' + cssMapping.sourceRoot + source + ' */'
+		});
+
+		return [content].concat(sourceURLs).concat([sourceMapping]).join('\n');
+	}
+
+	return [content].join('\n');
+}
+
+// Adapted from convert-source-map (MIT)
+function toComment(sourceMap) {
+	// eslint-disable-next-line no-undef
+	var base64 = btoa(unescape(encodeURIComponent(JSON.stringify(sourceMap))));
+	var data = 'sourceMappingURL=data:application/json;charset=utf-8;base64,' + base64;
+
+	return '/*# ' + data + ' */';
+}
+
+
+/***/ }),
+/* 58 */
+/***/ (function(module, exports) {
+
+exports.read = function (buffer, offset, isLE, mLen, nBytes) {
+  var e, m
+  var eLen = nBytes * 8 - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var nBits = -7
+  var i = isLE ? (nBytes - 1) : 0
+  var d = isLE ? -1 : 1
+  var s = buffer[offset + i]
+
+  i += d
+
+  e = s & ((1 << (-nBits)) - 1)
+  s >>= (-nBits)
+  nBits += eLen
+  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+
+  m = e & ((1 << (-nBits)) - 1)
+  e >>= (-nBits)
+  nBits += mLen
+  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+
+  if (e === 0) {
+    e = 1 - eBias
+  } else if (e === eMax) {
+    return m ? NaN : ((s ? -1 : 1) * Infinity)
+  } else {
+    m = m + Math.pow(2, mLen)
+    e = e - eBias
+  }
+  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
+}
+
+exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
+  var e, m, c
+  var eLen = nBytes * 8 - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
+  var i = isLE ? 0 : (nBytes - 1)
+  var d = isLE ? 1 : -1
+  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
+
+  value = Math.abs(value)
+
+  if (isNaN(value) || value === Infinity) {
+    m = isNaN(value) ? 1 : 0
+    e = eMax
+  } else {
+    e = Math.floor(Math.log(value) / Math.LN2)
+    if (value * (c = Math.pow(2, -e)) < 1) {
+      e--
+      c *= 2
+    }
+    if (e + eBias >= 1) {
+      value += rt / c
+    } else {
+      value += rt * Math.pow(2, 1 - eBias)
+    }
+    if (value * c >= 2) {
+      e++
+      c /= 2
+    }
+
+    if (e + eBias >= eMax) {
+      m = 0
+      e = eMax
+    } else if (e + eBias >= 1) {
+      m = (value * c - 1) * Math.pow(2, mLen)
+      e = e + eBias
+    } else {
+      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
+      e = 0
+    }
+  }
+
+  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
+
+  e = (e << mLen) | m
+  eLen += mLen
+  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
+
+  buffer[offset + i - d] |= s * 128
+}
+
+
+/***/ }),
+/* 59 */
+/***/ (function(module, exports) {
+
+var toString = {}.toString;
+
+module.exports = Array.isArray || function (arr) {
+  return toString.call(arr) == '[object Array]';
+};
+
+
+/***/ }),
+/* 60 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(process) {// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+// resolves . and .. elements in a path array with directory names there
+// must be no slashes, empty elements, or device names (c:\) in the array
+// (so also no leading and trailing slashes - it does not distinguish
+// relative and absolute paths)
+function normalizeArray(parts, allowAboveRoot) {
+  // if the path tries to go above the root, `up` ends up > 0
+  var up = 0;
+  for (var i = parts.length - 1; i >= 0; i--) {
+    var last = parts[i];
+    if (last === '.') {
+      parts.splice(i, 1);
+    } else if (last === '..') {
+      parts.splice(i, 1);
+      up++;
+    } else if (up) {
+      parts.splice(i, 1);
+      up--;
+    }
+  }
+
+  // if the path is allowed to go above the root, restore leading ..s
+  if (allowAboveRoot) {
+    for (; up--; up) {
+      parts.unshift('..');
+    }
+  }
+
+  return parts;
+}
+
+// Split a filename into [root, dir, basename, ext], unix version
+// 'root' is just a slash, or nothing.
+var splitPathRe =
+    /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
+var splitPath = function(filename) {
+  return splitPathRe.exec(filename).slice(1);
+};
+
+// path.resolve([from ...], to)
+// posix version
+exports.resolve = function() {
+  var resolvedPath = '',
+      resolvedAbsolute = false;
+
+  for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
+    var path = (i >= 0) ? arguments[i] : process.cwd();
+
+    // Skip empty and invalid entries
+    if (typeof path !== 'string') {
+      throw new TypeError('Arguments to path.resolve must be strings');
+    } else if (!path) {
+      continue;
+    }
+
+    resolvedPath = path + '/' + resolvedPath;
+    resolvedAbsolute = path.charAt(0) === '/';
+  }
+
+  // At this point the path should be resolved to a full absolute path, but
+  // handle relative paths to be safe (might happen when process.cwd() fails)
+
+  // Normalize the path
+  resolvedPath = normalizeArray(filter(resolvedPath.split('/'), function(p) {
+    return !!p;
+  }), !resolvedAbsolute).join('/');
+
+  return ((resolvedAbsolute ? '/' : '') + resolvedPath) || '.';
+};
+
+// path.normalize(path)
+// posix version
+exports.normalize = function(path) {
+  var isAbsolute = exports.isAbsolute(path),
+      trailingSlash = substr(path, -1) === '/';
+
+  // Normalize the path
+  path = normalizeArray(filter(path.split('/'), function(p) {
+    return !!p;
+  }), !isAbsolute).join('/');
+
+  if (!path && !isAbsolute) {
+    path = '.';
+  }
+  if (path && trailingSlash) {
+    path += '/';
+  }
+
+  return (isAbsolute ? '/' : '') + path;
+};
+
+// posix version
+exports.isAbsolute = function(path) {
+  return path.charAt(0) === '/';
+};
+
+// posix version
+exports.join = function() {
+  var paths = Array.prototype.slice.call(arguments, 0);
+  return exports.normalize(filter(paths, function(p, index) {
+    if (typeof p !== 'string') {
+      throw new TypeError('Arguments to path.join must be strings');
+    }
+    return p;
+  }).join('/'));
+};
+
+
+// path.relative(from, to)
+// posix version
+exports.relative = function(from, to) {
+  from = exports.resolve(from).substr(1);
+  to = exports.resolve(to).substr(1);
+
+  function trim(arr) {
+    var start = 0;
+    for (; start < arr.length; start++) {
+      if (arr[start] !== '') break;
+    }
+
+    var end = arr.length - 1;
+    for (; end >= 0; end--) {
+      if (arr[end] !== '') break;
+    }
+
+    if (start > end) return [];
+    return arr.slice(start, end - start + 1);
+  }
+
+  var fromParts = trim(from.split('/'));
+  var toParts = trim(to.split('/'));
+
+  var length = Math.min(fromParts.length, toParts.length);
+  var samePartsLength = length;
+  for (var i = 0; i < length; i++) {
+    if (fromParts[i] !== toParts[i]) {
+      samePartsLength = i;
+      break;
+    }
+  }
+
+  var outputParts = [];
+  for (var i = samePartsLength; i < fromParts.length; i++) {
+    outputParts.push('..');
+  }
+
+  outputParts = outputParts.concat(toParts.slice(samePartsLength));
+
+  return outputParts.join('/');
+};
+
+exports.sep = '/';
+exports.delimiter = ':';
+
+exports.dirname = function(path) {
+  var result = splitPath(path),
+      root = result[0],
+      dir = result[1];
+
+  if (!root && !dir) {
+    // No dirname whatsoever
+    return '.';
+  }
+
+  if (dir) {
+    // It has a dirname, strip trailing slash
+    dir = dir.substr(0, dir.length - 1);
+  }
+
+  return root + dir;
+};
+
+
+exports.basename = function(path, ext) {
+  var f = splitPath(path)[2];
+  // TODO: make this comparison case-insensitive on windows?
+  if (ext && f.substr(-1 * ext.length) === ext) {
+    f = f.substr(0, f.length - ext.length);
+  }
+  return f;
+};
+
+
+exports.extname = function(path) {
+  return splitPath(path)[3];
+};
+
+function filter (xs, f) {
+    if (xs.filter) return xs.filter(f);
+    var res = [];
+    for (var i = 0; i < xs.length; i++) {
+        if (f(xs[i], i, xs)) res.push(xs[i]);
+    }
+    return res;
+}
+
+// String.prototype.substr - negative index don't work in IE8
+var substr = 'ab'.substr(-1) === 'b'
+    ? function (str, start, len) { return str.substr(start, len) }
+    : function (str, start, len) {
+        if (start < 0) start = str.length + start;
+        return str.substr(start, len);
+    }
+;
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+
+/***/ }),
+/* 61 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+
+// If obj.hasOwnProperty has been overridden, then calling
+// obj.hasOwnProperty(prop) will break.
+// See: https://github.com/joyent/node/issues/1707
+function hasOwnProperty(obj, prop) {
+  return Object.prototype.hasOwnProperty.call(obj, prop);
+}
+
+module.exports = function(qs, sep, eq, options) {
+  sep = sep || '&';
+  eq = eq || '=';
+  var obj = {};
+
+  if (typeof qs !== 'string' || qs.length === 0) {
+    return obj;
+  }
+
+  var regexp = /\+/g;
+  qs = qs.split(sep);
+
+  var maxKeys = 1000;
+  if (options && typeof options.maxKeys === 'number') {
+    maxKeys = options.maxKeys;
+  }
+
+  var len = qs.length;
+  // maxKeys <= 0 means that we should not limit keys count
+  if (maxKeys > 0 && len > maxKeys) {
+    len = maxKeys;
+  }
+
+  for (var i = 0; i < len; ++i) {
+    var x = qs[i].replace(regexp, '%20'),
+        idx = x.indexOf(eq),
+        kstr, vstr, k, v;
+
+    if (idx >= 0) {
+      kstr = x.substr(0, idx);
+      vstr = x.substr(idx + 1);
+    } else {
+      kstr = x;
+      vstr = '';
+    }
+
+    k = decodeURIComponent(kstr);
+    v = decodeURIComponent(vstr);
+
+    if (!hasOwnProperty(obj, k)) {
+      obj[k] = v;
+    } else if (isArray(obj[k])) {
+      obj[k].push(v);
+    } else {
+      obj[k] = [obj[k], v];
+    }
+  }
+
+  return obj;
+};
+
+var isArray = Array.isArray || function (xs) {
+  return Object.prototype.toString.call(xs) === '[object Array]';
+};
+
+
+/***/ }),
+/* 62 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+
+var stringifyPrimitive = function(v) {
+  switch (typeof v) {
+    case 'string':
+      return v;
+
+    case 'boolean':
+      return v ? 'true' : 'false';
+
+    case 'number':
+      return isFinite(v) ? v : '';
+
+    default:
+      return '';
+  }
+};
+
+module.exports = function(obj, sep, eq, name) {
+  sep = sep || '&';
+  eq = eq || '=';
+  if (obj === null) {
+    obj = undefined;
+  }
+
+  if (typeof obj === 'object') {
+    return map(objectKeys(obj), function(k) {
+      var ks = encodeURIComponent(stringifyPrimitive(k)) + eq;
+      if (isArray(obj[k])) {
+        return map(obj[k], function(v) {
+          return ks + encodeURIComponent(stringifyPrimitive(v));
+        }).join(sep);
+      } else {
+        return ks + encodeURIComponent(stringifyPrimitive(obj[k]));
+      }
+    }).join(sep);
+
+  }
+
+  if (!name) return '';
+  return encodeURIComponent(stringifyPrimitive(name)) + eq +
+         encodeURIComponent(stringifyPrimitive(obj));
+};
+
+var isArray = Array.isArray || function (xs) {
+  return Object.prototype.toString.call(xs) === '[object Array]';
+};
+
+function map (xs, f) {
+  if (xs.map) return xs.map(f);
+  var res = [];
+  for (var i = 0; i < xs.length; i++) {
+    res.push(f(xs[i], i));
+  }
+  return res;
+}
+
+var objectKeys = Object.keys || function (obj) {
+  var res = [];
+  for (var key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) res.push(key);
+  }
+  return res;
+};
+
+
+/***/ }),
+/* 63 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+exports.decode = exports.parse = __webpack_require__(61);
+exports.encode = exports.stringify = __webpack_require__(62);
+
+
+/***/ }),
+/* 64 */
+/***/ (function(module, exports) {
+
+/* globals __VUE_SSR_CONTEXT__ */
+
+// this module is a runtime utility for cleaner component module output and will
+// be included in the final webpack user bundle
+
+module.exports = function normalizeComponent (
+  rawScriptExports,
+  compiledTemplate,
+  injectStyles,
+  scopeId,
+  moduleIdentifier /* server only */
+) {
+  var esModule
+  var scriptExports = rawScriptExports = rawScriptExports || {}
+
+  // ES6 modules interop
+  var type = typeof rawScriptExports.default
+  if (type === 'object' || type === 'function') {
+    esModule = rawScriptExports
+    scriptExports = rawScriptExports.default
+  }
+
+  // Vue.extend constructor export interop
+  var options = typeof scriptExports === 'function'
+    ? scriptExports.options
+    : scriptExports
+
+  // render functions
+  if (compiledTemplate) {
+    options.render = compiledTemplate.render
+    options.staticRenderFns = compiledTemplate.staticRenderFns
+  }
+
+  // scopedId
+  if (scopeId) {
+    options._scopeId = scopeId
+  }
+
+  var hook
+  if (moduleIdentifier) { // server build
+    hook = function (context) {
+      // 2.3 injection
+      context =
+        context || // cached call
+        (this.$vnode && this.$vnode.ssrContext) || // stateful
+        (this.parent && this.parent.$vnode && this.parent.$vnode.ssrContext) // functional
+      // 2.2 with runInNewContext: true
+      if (!context && typeof __VUE_SSR_CONTEXT__ !== 'undefined') {
+        context = __VUE_SSR_CONTEXT__
+      }
+      // inject component styles
+      if (injectStyles) {
+        injectStyles.call(this, context)
+      }
+      // register component module identifier for async chunk inferrence
+      if (context && context._registeredComponents) {
+        context._registeredComponents.add(moduleIdentifier)
+      }
+    }
+    // used by ssr in case component is cached and beforeCreate
+    // never gets called
+    options._ssrRegister = hook
+  } else if (injectStyles) {
+    hook = injectStyles
+  }
+
+  if (hook) {
+    var functional = options.functional
+    var existing = functional
+      ? options.render
+      : options.beforeCreate
+    if (!functional) {
+      // inject component registration as beforeCreate hook
+      options.beforeCreate = existing
+        ? [].concat(existing, hook)
+        : [hook]
+    } else {
+      // register for functioal component in vue file
+      options.render = function renderWithStyleInjection (h, context) {
+        hook.call(context)
+        return existing(h, context)
+      }
+    }
+  }
+
+  return {
+    esModule: esModule,
+    exports: scriptExports,
+    options: options
+  }
+}
+
+
+/***/ }),
+/* 65 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
+  return _c('div', {
+    attrs: {
+      "id": "todo-app"
+    }
+  }, [_c('section', {
+    staticClass: "searchArea mdc-textfield"
+  }, [_c('input', {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: (_vm.inputString),
+      expression: "inputString"
+    }],
+    staticClass: "add-todo mdc-textfield__input",
+    attrs: {
+      "id": "addtodo-textfield",
+      "placeholder": "Enter a Todo",
+      "autofocus": ""
+    },
+    domProps: {
+      "value": (_vm.inputString)
+    },
+    on: {
+      "keyup": function($event) {
+        if (!('button' in $event) && _vm._k($event.keyCode, "enter", 13)) { return null; }
+        _vm.addTodo($event)
+      },
+      "input": function($event) {
+        if ($event.target.composing) { return; }
+        _vm.inputString = $event.target.value
+      }
+    }
+  })]), _vm._v(" "), _c('section', {
+    staticClass: "todos mdc-grid-list"
+  }, [_c('ul', {
+    staticClass: "todoList mdc-grid-list__tiles"
+  }, _vm._l((_vm.todos), function(todo) {
+    return _c('li', {
+      staticClass: "mdc-card mdc-grid-tile",
+      class: {
+        completed: todo.completed
+      }
+    }, [_c('section', {
+      staticClass: "mdc-card__primary mdc-grid-tile__primary"
+    }, [_c('h1', {
+      staticClass: "mdc-card__title"
+    }, [_vm._v(_vm._s(todo.title))]), _vm._v(" "), _c('div', {
+      staticClass: "mdc-card__subtitle todoDescription mdc-card__supporting-text"
+    }, [_vm._v(_vm._s(todo.description))])]), _vm._v(" "), _c('section', {
+      staticClass: "mdc-grid-tile__secondary"
+    }, [_c('div', {
+      staticClass: "mdc-grid-tile__secondary-content mdc-checkbox"
+    }, [_c('input', {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: (todo.completed),
+        expression: "todo.completed"
+      }],
+      staticClass: "mdc-checkbox__native-control",
+      attrs: {
+        "id": "completed-checkbox",
+        "type": "checkbox"
+      },
+      domProps: {
+        "checked": Array.isArray(todo.completed) ? _vm._i(todo.completed, null) > -1 : (todo.completed)
+      },
+      on: {
+        "click": function($event) {
+          _vm.updateTodo(todo)
+        },
+        "__c": function($event) {
+          var $$a = todo.completed,
+            $$el = $event.target,
+            $$c = $$el.checked ? (true) : (false);
+          if (Array.isArray($$a)) {
+            var $$v = null,
+              $$i = _vm._i($$a, $$v);
+            if ($$c) {
+              $$i < 0 && (todo.completed = $$a.concat($$v))
+            } else {
+              $$i > -1 && (todo.completed = $$a.slice(0, $$i).concat($$a.slice($$i + 1)))
+            }
+          } else {
+            todo.completed = $$c
+          }
+        }
+      }
+    }), _vm._v(" "), (todo.completed) ? _c('label', {
+      attrs: {
+        "for": "completed-checkbox"
+      }
+    }, [_vm._v("Completed")]) : _vm._e(), _vm._v(" "), (!todo.completed) ? _c('label', {
+      attrs: {
+        "for": "completed-checkbox"
+      }
+    }, [_vm._v("In Progress")]) : _vm._e()]), _vm._v(" "), _c('button', {
+      staticClass: "mdc-grid-tile__secondary-content mdc-button",
+      on: {
+        "click": function($event) {
+          _vm.removeTodo(todo)
+        }
+      }
+    }, [_vm._v("Delete")])])])
+  }))])])
+},staticRenderFns: []}
+module.exports.render._withStripped = true
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+     require("vue-hot-reload-api").rerender("data-v-18136991", module.exports)
+  }
+}
+
+/***/ }),
+/* 66 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(56);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(67)("3860e7c0", content, false);
+// Hot Module Replacement
+if(false) {
+ // When the styles change, update the <style> tags
+ if(!content.locals) {
+   module.hot.accept("!!../../node_modules/css-loader/index.js!../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-18136991\",\"scoped\":false,\"hasInlineConfig\":false}!./styles.css", function() {
+     var newContent = require("!!../../node_modules/css-loader/index.js!../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-18136991\",\"scoped\":false,\"hasInlineConfig\":false}!./styles.css");
+     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+     update(newContent);
+   });
+ }
+ // When the module is disposed, remove the <style> tags
+ module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 67 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/*
+  MIT License http://www.opensource.org/licenses/mit-license.php
+  Author Tobias Koppers @sokra
+  Modified by Evan You @yyx990803
+*/
+
+var hasDocument = typeof document !== 'undefined'
+
+if (typeof DEBUG !== 'undefined' && DEBUG) {
+  if (!hasDocument) {
+    throw new Error(
+    'vue-style-loader cannot be used in a non-browser environment. ' +
+    "Use { target: 'node' } in your Webpack config to indicate a server-rendering environment."
+  ) }
+}
+
+var listToStyles = __webpack_require__(68)
+
+/*
+type StyleObject = {
+  id: number;
+  parts: Array<StyleObjectPart>
+}
+
+type StyleObjectPart = {
+  css: string;
+  media: string;
+  sourceMap: ?string
+}
+*/
+
+var stylesInDom = {/*
+  [id: number]: {
+    id: number,
+    refs: number,
+    parts: Array<(obj?: StyleObjectPart) => void>
+  }
+*/}
+
+var head = hasDocument && (document.head || document.getElementsByTagName('head')[0])
+var singletonElement = null
+var singletonCounter = 0
+var isProduction = false
+var noop = function () {}
+
+// Force single-tag solution on IE6-9, which has a hard limit on the # of <style>
+// tags it will allow on a page
+var isOldIE = typeof navigator !== 'undefined' && /msie [6-9]\b/.test(navigator.userAgent.toLowerCase())
+
+module.exports = function (parentId, list, _isProduction) {
+  isProduction = _isProduction
+
+  var styles = listToStyles(parentId, list)
+  addStylesToDom(styles)
+
+  return function update (newList) {
+    var mayRemove = []
+    for (var i = 0; i < styles.length; i++) {
+      var item = styles[i]
+      var domStyle = stylesInDom[item.id]
+      domStyle.refs--
+      mayRemove.push(domStyle)
+    }
+    if (newList) {
+      styles = listToStyles(parentId, newList)
+      addStylesToDom(styles)
+    } else {
+      styles = []
+    }
+    for (var i = 0; i < mayRemove.length; i++) {
+      var domStyle = mayRemove[i]
+      if (domStyle.refs === 0) {
+        for (var j = 0; j < domStyle.parts.length; j++) {
+          domStyle.parts[j]()
+        }
+        delete stylesInDom[domStyle.id]
+      }
+    }
+  }
+}
+
+function addStylesToDom (styles /* Array<StyleObject> */) {
+  for (var i = 0; i < styles.length; i++) {
+    var item = styles[i]
+    var domStyle = stylesInDom[item.id]
+    if (domStyle) {
+      domStyle.refs++
+      for (var j = 0; j < domStyle.parts.length; j++) {
+        domStyle.parts[j](item.parts[j])
+      }
+      for (; j < item.parts.length; j++) {
+        domStyle.parts.push(addStyle(item.parts[j]))
+      }
+      if (domStyle.parts.length > item.parts.length) {
+        domStyle.parts.length = item.parts.length
+      }
+    } else {
+      var parts = []
+      for (var j = 0; j < item.parts.length; j++) {
+        parts.push(addStyle(item.parts[j]))
+      }
+      stylesInDom[item.id] = { id: item.id, refs: 1, parts: parts }
+    }
+  }
+}
+
+function createStyleElement () {
+  var styleElement = document.createElement('style')
+  styleElement.type = 'text/css'
+  head.appendChild(styleElement)
+  return styleElement
+}
+
+function addStyle (obj /* StyleObjectPart */) {
+  var update, remove
+  var styleElement = document.querySelector('style[data-vue-ssr-id~="' + obj.id + '"]')
+
+  if (styleElement) {
+    if (isProduction) {
+      // has SSR styles and in production mode.
+      // simply do nothing.
+      return noop
+    } else {
+      // has SSR styles but in dev mode.
+      // for some reason Chrome can't handle source map in server-rendered
+      // style tags - source maps in <style> only works if the style tag is
+      // created and inserted dynamically. So we remove the server rendered
+      // styles and inject new ones.
+      styleElement.parentNode.removeChild(styleElement)
+    }
+  }
+
+  if (isOldIE) {
+    // use singleton mode for IE9.
+    var styleIndex = singletonCounter++
+    styleElement = singletonElement || (singletonElement = createStyleElement())
+    update = applyToSingletonTag.bind(null, styleElement, styleIndex, false)
+    remove = applyToSingletonTag.bind(null, styleElement, styleIndex, true)
+  } else {
+    // use multi-style-tag mode in all other cases
+    styleElement = createStyleElement()
+    update = applyToTag.bind(null, styleElement)
+    remove = function () {
+      styleElement.parentNode.removeChild(styleElement)
+    }
+  }
+
+  update(obj)
+
+  return function updateStyle (newObj /* StyleObjectPart */) {
+    if (newObj) {
+      if (newObj.css === obj.css &&
+          newObj.media === obj.media &&
+          newObj.sourceMap === obj.sourceMap) {
+        return
+      }
+      update(obj = newObj)
+    } else {
+      remove()
+    }
+  }
+}
+
+var replaceText = (function () {
+  var textStore = []
+
+  return function (index, replacement) {
+    textStore[index] = replacement
+    return textStore.filter(Boolean).join('\n')
+  }
+})()
+
+function applyToSingletonTag (styleElement, index, remove, obj) {
+  var css = remove ? '' : obj.css
+
+  if (styleElement.styleSheet) {
+    styleElement.styleSheet.cssText = replaceText(index, css)
+  } else {
+    var cssNode = document.createTextNode(css)
+    var childNodes = styleElement.childNodes
+    if (childNodes[index]) styleElement.removeChild(childNodes[index])
+    if (childNodes.length) {
+      styleElement.insertBefore(cssNode, childNodes[index])
+    } else {
+      styleElement.appendChild(cssNode)
+    }
+  }
+}
+
+function applyToTag (styleElement, obj) {
+  var css = obj.css
+  var media = obj.media
+  var sourceMap = obj.sourceMap
+
+  if (media) {
+    styleElement.setAttribute('media', media)
+  }
+
+  if (sourceMap) {
+    // https://developer.chrome.com/devtools/docs/javascript-debugging
+    // this makes source maps inside style tags work properly in Chrome
+    css += '\n/*# sourceURL=' + sourceMap.sources[0] + ' */'
+    // http://stackoverflow.com/a/26603875
+    css += '\n/*# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(JSON.stringify(sourceMap)))) + ' */'
+  }
+
+  if (styleElement.styleSheet) {
+    styleElement.styleSheet.cssText = css
+  } else {
+    while (styleElement.firstChild) {
+      styleElement.removeChild(styleElement.firstChild)
+    }
+    styleElement.appendChild(document.createTextNode(css))
+  }
+}
+
+
+/***/ }),
+/* 68 */
+/***/ (function(module, exports) {
+
+/**
+ * Translates the list format produced by css-loader into something
+ * easier to manipulate.
+ */
+module.exports = function listToStyles (parentId, list) {
+  var styles = []
+  var newStyles = {}
+  for (var i = 0; i < list.length; i++) {
+    var item = list[i]
+    var id = item[0]
+    var css = item[1]
+    var media = item[2]
+    var sourceMap = item[3]
+    var part = {
+      id: parentId + ':' + i,
+      css: css,
+      media: media,
+      sourceMap: sourceMap
+    }
+    if (!newStyles[id]) {
+      styles.push(newStyles[id] = { id: id, parts: [part] })
+    } else {
+      newStyles[id].parts.push(part)
+    }
+  }
+  return styles
+}
+
 
 /***/ })
 /******/ ]);
