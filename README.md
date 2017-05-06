@@ -53,9 +53,9 @@ in the root folder of our application for **webpack to watch** for any changes i
 
 ## Improvements and Fixes Checklist
 
-[] Testing Modules for the API.
-[] Editing of Todos.
-[] Generate Documentation using [JSDocs](http://usejsdoc.org/).
+- [ ] Testing Modules for the API.
+- [ ] Editing of Todos.
+- [ ] Generate Documentation using [JSDocs](http://usejsdoc.org/).
 
 ## Author
 
