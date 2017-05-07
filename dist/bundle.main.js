@@ -11657,7 +11657,6 @@ exports.default = {
      * @param {object} todo - the todo item to be updated.
      */
     updateTodo: function updateTodo(todo) {
-      console.log(todo);
       TodoRestServices.updateTodo(todo).then(function (response) {
         console.log(response.statusText);
       }).catch(function (error) {
@@ -11791,7 +11790,7 @@ var RestServices = function () {
                 return;
             }
             var data = _querystring2.default.stringify(todo);
-            return _axios2.default.put(_path2.default.join('todo', todo._id), data).catch(function (error) {
+            return _axios2.default.put(_path2.default.join('todo', todo._id.toString()), data).catch(function (error) {
                 console.log(error);
             });
         }

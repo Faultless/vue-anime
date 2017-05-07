@@ -51,7 +51,7 @@ export default class RestServices {
             return
         }
         var data = querystring.stringify(todo);
-        return Axios.put(path.join('todo', todo._id), data)
+        return Axios.put(path.join('todo', todo._id.toString()), data)
         .catch((error) => {
             console.log(error);
         })

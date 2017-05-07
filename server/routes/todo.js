@@ -44,10 +44,9 @@ todo.route('/:todoId')
         var newtodo = model.findById(req.params.todoId, (err, todo) => {
             if(err)
                 res.send(err);
-            todo
-                .title = req.body.title
-                .description = req.body.description
-                .completed = req.body.completed;
+            todo.title = req.body.title;
+            todo.description = req.body.description;
+            todo.completed = req.body.completed;
 
             todo.save((err) => {
                 if(err)

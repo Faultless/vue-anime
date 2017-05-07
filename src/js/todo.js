@@ -70,7 +70,6 @@ export default {
      * @param {object} todo - the todo item to be updated.
      */
     updateTodo: function(todo) {
-      console.log(todo);
       TodoRestServices.updateTodo(todo).then((response) => {
         console.log(response.statusText);
       })
