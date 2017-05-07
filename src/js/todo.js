@@ -8,6 +8,7 @@ export default {
   data () {
     return {
       inputString: '',
+      editedTodo: null,
       todos: []
     }
   },
@@ -20,7 +21,7 @@ export default {
     addTodo: function() {
       var todo = {
         "title": this.inputString,
-        "description": this.inputString,
+        "description": '',
         "completed": false
       }
       TodoRestServices.saveTodo(todo).then((response) => {
@@ -77,6 +78,28 @@ export default {
         window.alert('An error occured while updating the todo');
         console.log(error);
       })
+    },
+    /**
+     * Allows live editing of the todo item's title as well as description
+     * @param {object} todo - the todo item to be updated.
+     */
+    editTodo: function(todo) {
+      this.editedTodo = todo;
+    },
+    /**
+     * Signals that the user is done editing the todo item's description and initiates a save to the db document.
+     * @param {object} todo - the todo item to be updated.
+     */
+    doneEdit: function(todo) {
+      this.editedTodo = null; // reset the "edited" flag.
+      this.updateTodo(todo);
+    }
+  },
+  directives: {
+    'todo-focus': function (el, binding) {
+      if (binding.value) {
+        el.focus()
+      }
     }
   },
   mounted: function() {

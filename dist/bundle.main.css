@@ -3757,6 +3757,17 @@ fieldset:disabled .mdc-button--raised, .mdc-button--raised:disabled{
 body {
     font-family: 'Roboto', sans-serif;
 }
+.edit {
+    display: none;
+    padding: 8px 0;
+    padding-left: 10px;
+}
+.editing .description {
+    display: none;
+}
+.editing .edit {
+    display: inline-block;
+}
 .searchArea {
     width: 100%;
     padding: 20px 10px;

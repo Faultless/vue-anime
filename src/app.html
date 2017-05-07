@@ -4,10 +4,15 @@
     </section>
     <section class="todos mdc-grid-list">
         <ul class="todoList mdc-grid-list__tiles">
-            <li v-for="todo in todos" class="mdc-card mdc-grid-tile" :class="{ completed: todo.completed }">
+            <li v-for="todo in todos" class="mdc-card mdc-grid-tile" :class="{ completed: todo.completed, editing: todo == editedTodo }">
                 <section class="mdc-card__primary mdc-grid-tile__primary">
                     <h1 class="mdc-card__title">{{ todo.title }}</h1>
-                    <div class="mdc-card__subtitle todoDescription mdc-card__supporting-text">{{todo.description}}</div>
+                    <div @dblclick="editTodo(todo)" class="description mdc-card__subtitle todoDescription mdc-card__supporting-text">{{ todo.description == '' ? 'Double Click here to edit the description.' : todo.description }}</div>
+                    <input class="edit" type="text"
+                        v-model="todo.description"
+                        v-todo-focus="todo == editedTodo"
+                        @blur="doneEdit(todo)"
+                        @keyup.enter="doneEdit(todo)">
                 </section>
                 <section class="mdc-grid-tile__secondary">
                     <div class="mdc-grid-tile__secondary-content mdc-checkbox">
