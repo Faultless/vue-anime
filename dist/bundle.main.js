@@ -11583,10 +11583,13 @@ var _restServices2 = _interopRequireDefault(_restServices);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-/** @constant - an instance of RestServices used throughout the application to access the REST API. */
+/** 
+ * an instance of RestServices used throughout the application to access the REST API.
+ * @constant 
+ */
 var TodoRestServices = new _restServices2.default(); /**
                                                       * @fileOverview A Vue script containing all the logic for the Todo App. 
-                                                      * @author <a href="mailto:kamel.serge@hotmail.fr">Serge R. Kamel</a>
+                                                      * @author Serge R. Kamel
                                                       * @version 0.0.1
                                                       */
 
@@ -11605,7 +11608,8 @@ exports.default = {
   watch: {},
   methods: {
     /**
-     * Add a Todo Item for the current user and save it.
+     * @function addTodo
+     * @desc Add a Todo Item for the current user and save it.
      */
     addTodo: function addTodo() {
       var _this = this;
@@ -11625,7 +11629,8 @@ exports.default = {
       });
     },
     /**
-     * Request all todos to be fetched, or a specific one using an ID
+     * @function fetchTodo
+     * @desc Request all todos to be fetched, or a specific one using an ID
      */
     fetchTodo: function fetchTodo() {
       var _this2 = this;
@@ -11633,7 +11638,8 @@ exports.default = {
       if (!this.todoid) {
         TodoRestServices.requestTodo().then(function (response) {
           /**
-           * Map each Todo Item fetched from the document to the corresponding Local version.
+           * @function map((todo) => push())
+           * @desc Map each Todo Item fetched from the document to the corresponding Local version.
            */
           response.data.map(function (todo) {
             _this2.todos.push({
@@ -11648,14 +11654,17 @@ exports.default = {
       var specificTodo = TodoRestServices.requestTodo(this.todoid);
     },
     /**
-     * Remove a specific Todo item from the database.
+     * @function removeTodo(todo)
+     * @desc Remove a specific Todo item from the database.
      * @param {object} todo - the todo item to be deleted.
      */
     removeTodo: function removeTodo(todo) {
       var _this3 = this;
 
       TodoRestServices.deleteTodo(todo._id).then(function (response) {
-        /** Delete the local Todo item if the remote document Todo has been successfully removed. */
+        /** 
+         * @function splite(indexOf(todo), number)
+         * @desc Delete the local Todo item if the remote document Todo has been successfully removed. */
         _this3.todos.splice(_this3.todos.indexOf(todo), 1);
         console.log(response.statusText);
       }).catch(function (error) {
@@ -11664,7 +11673,8 @@ exports.default = {
       });
     },
     /**
-     * Update a specific Todo item from the database.
+     * @function updateTodo(todo)
+     * @desc Update a specific Todo item from the database.
      * @param {object} todo - the todo item to be updated.
      */
     updateTodo: function updateTodo(todo) {
@@ -11676,14 +11686,16 @@ exports.default = {
       });
     },
     /**
-     * Allows live editing of the todo item's title as well as description
+     * @function editTodo(todo)
+     * @desc Allows live editing of the todo item's title as well as description
      * @param {object} todo - the todo item to be updated.
      */
     editTodo: function editTodo(todo) {
       this.editedTodo = todo;
     },
     /**
-     * Signals that the user is done editing the todo item's description and initiates a save to the db document.
+     * @function doneEdit(todo)
+     * @desc Signals that the user is done editing the todo item's description and initiates a save to the db document.
      * @param {object} todo - the todo item to be updated.
      */
     doneEdit: function doneEdit(todo) {
@@ -11767,7 +11779,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  */
 _axios2.default.defaults.baseURL = 'http://localhost:3000/api'; /**
                                                                  * @fileOverview Various Todo services for the Todo API.
-                                                                 * @author <a href="mailto:kamel.serge@hotmail.fr">Serge R. Kamel</a>
+                                                                 * @author Serge R. Kamel
                                                                  * @version 0.0.1
                                                                  */
 
@@ -11775,10 +11787,9 @@ _axios2.default.defaults.timeout = 10000;
 _axios2.default.defaults.headers.post['Content-Type'], _axios2.default.defaults.headers.put['Content-Type'] = "application/x-www-form-urlencoded";
 
 /**
- * @class
  * A class that exports handy methods to interact with the Todo API.
+ * @class RestServices
  */
-
 var RestServices = function () {
     function RestServices() {
         (0, _classCallCheck3.default)(this, RestServices);
