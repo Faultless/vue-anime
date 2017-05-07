@@ -11583,15 +11583,21 @@ var _restServices2 = _interopRequireDefault(_restServices);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var TodoRestServices = new _restServices2.default(); // Instantiate our custom services class.
-
-var todoTitle, todoDescription;
+/** @constant - an instance of RestServices used throughout the application to access the REST API. */
+var TodoRestServices = new _restServices2.default(); /**
+                                                      * @fileOverview A Vue script containing all the logic for the Todo App. 
+                                                      * @author <a href="mailto:kamel.serge@hotmail.fr">Serge R. Kamel</a>
+                                                      * @version 0.0.1
+                                                      */
 
 exports.default = {
   data: function data() {
     return {
+      /** @type {string} */
       inputString: '',
+      /** @type {object} */
       editedTodo: null,
+      /** @type {array} */
       todos: []
     };
   },
@@ -11626,6 +11632,9 @@ exports.default = {
 
       if (!this.todoid) {
         TodoRestServices.requestTodo().then(function (response) {
+          /**
+           * Map each Todo Item fetched from the document to the corresponding Local version.
+           */
           response.data.map(function (todo) {
             _this2.todos.push({
               "_id": todo._id,
@@ -11646,6 +11655,7 @@ exports.default = {
       var _this3 = this;
 
       TodoRestServices.deleteTodo(todo._id).then(function (response) {
+        /** Delete the local Todo item if the remote document Todo has been successfully removed. */
         _this3.todos.splice(_this3.todos.indexOf(todo), 1);
         console.log(response.statusText);
       }).catch(function (error) {
@@ -11755,9 +11765,19 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 /**
  * Setting the default Parameters for Axios
  */
-_axios2.default.defaults.baseURL = 'http://localhost:3000/api';
+_axios2.default.defaults.baseURL = 'http://localhost:3000/api'; /**
+                                                                 * @fileOverview Various Todo services for the Todo API.
+                                                                 * @author <a href="mailto:kamel.serge@hotmail.fr">Serge R. Kamel</a>
+                                                                 * @version 0.0.1
+                                                                 */
+
 _axios2.default.defaults.timeout = 10000;
 _axios2.default.defaults.headers.post['Content-Type'], _axios2.default.defaults.headers.put['Content-Type'] = "application/x-www-form-urlencoded";
+
+/**
+ * @class
+ * A class that exports handy methods to interact with the Todo API.
+ */
 
 var RestServices = function () {
     function RestServices() {

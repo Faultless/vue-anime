@@ -1,3 +1,9 @@
+/**
+ * @fileOverview Various Todo services for the Todo API.
+ * @author <a href="mailto:kamel.serge@hotmail.fr">Serge R. Kamel</a>
+ * @version 0.0.1
+ */
+
 import Axios from 'axios';
 import path from 'path';
 import querystring from 'querystring';
@@ -8,6 +14,11 @@ import querystring from 'querystring';
 Axios.defaults.baseURL = 'http://localhost:3000/api';
 Axios.defaults.timeout = 10000;
 Axios.defaults.headers.post['Content-Type'], Axios.defaults.headers.put['Content-Type'] = "application/x-www-form-urlencoded";
+
+/**
+ * @class
+ * A class that exports handy methods to interact with the Todo API.
+ */
 export default class RestServices {
     /**
      * Fetch all Todos or a specific Todo by passing a Todo ID.

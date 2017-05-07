@@ -1,14 +1,22 @@
+/**
+ * @fileOverview A Vue script containing all the logic for the Todo App. 
+ * @author <a href="mailto:kamel.serge@hotmail.fr">Serge R. Kamel</a>
+ * @version 0.0.1
+ */
+
 import RestServices from './rest-services';
 
-const TodoRestServices = new RestServices(); // Instantiate our custom services class.
-
-var todoTitle, todoDescription;
+/** @constant - an instance of RestServices used throughout the application to access the REST API. */
+const TodoRestServices = new RestServices(); 
 
 export default {
   data () {
     return {
+      /** @type {string} */
       inputString: '',
+      /** @type {object} */
       editedTodo: null,
+      /** @type {array} */
       todos: []
     }
   },
@@ -40,6 +48,9 @@ export default {
     fetchTodo: function() {
       if(!this.todoid) {
         TodoRestServices.requestTodo().then((response) => {
+          /**
+           * Map each Todo Item fetched from the document to the corresponding Local version.
+           */
           response.data.map((todo) => {
             this.todos.push({
               "_id": todo._id,
@@ -58,6 +69,7 @@ export default {
      */
     removeTodo: function(todo) {
       TodoRestServices.deleteTodo(todo._id).then((response) => {
+        /** Delete the local Todo item if the remote document Todo has been successfully removed. */
         this.todos.splice(this.todos.indexOf(todo), 1);
         console.log(response.statusText);
       })
