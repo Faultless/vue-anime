@@ -47,11 +47,15 @@ webpack -w
 
 in the root folder of our application for **webpack to watch** for any changes in the files.
 
+## Documentation
+
+Checkout the [Docs](docs) for a quick overview of the important methods in use as well as variables.
+
 ## Improvements and Fixes Checklist
 
 - [ ] Testing Modules for the API.
 - [ ] Editing of Todos.
-- [ ] Generate Documentation using [JSDocs](http://usejsdoc.org/).
+- [x] Generate Documentation using [JSDocs](http://usejsdoc.org/).
 
 ## Author
 
