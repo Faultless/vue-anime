@@ -4,7 +4,8 @@ var mongoose = require('mongoose');
 var todo = new mongoose.Schema({
     title: String,
     description: String,
-    completed: Boolean
+    completed: Boolean,
+    user: String
 });
 
 module.exports = mongoose.model('Todo', todo);

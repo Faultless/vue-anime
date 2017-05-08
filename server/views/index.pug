@@ -7,9 +7,9 @@ block content
         a(href="/login") Login
       li  
         a(href="/register") Register
-    br
-    div(class="todo")
-      app
   if (user)
     p You are currently logged in as #{user.username}
     a(href="/logout") Logout
+    br
+    div(class="todo")
+      app

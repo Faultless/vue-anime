@@ -1069,7 +1069,7 @@ var Component = __webpack_require__(64)(
   /* moduleIdentifier (server only) */
   null
 )
-Component.options.__file = "C:\\Users\\skamel\\todo-challenge\\src\\app.vue"
+Component.options.__file = "C:\\Users\\Serge\\Projects\\todo-challenge\\src\\app.vue"
 if (Component.esModule && Object.keys(Component.esModule).some(function (key) {return key !== "default" && key.substr(0, 2) !== "__"})) {console.error("named exports are not supported in *.vue files.")}
 if (Component.options.functional) {console.error("[vue-loader] app.vue: functional components are not supported with templates, they should use render functions.")}
 
@@ -11601,7 +11601,9 @@ exports.default = {
       /** @type {object} */
       editedTodo: null,
       /** @type {array} */
-      todos: []
+      todos: [],
+      /** @type {string} */
+      currentUser: ''
     };
   },
 
@@ -11617,9 +11619,11 @@ exports.default = {
       var todo = {
         "title": this.inputString,
         "description": '',
-        "completed": false
+        "completed": false,
+        "user": this.currentUser
       };
-      TodoRestServices.saveTodo(todo).then(function (response) {
+      console.log(todo);
+      TodoRestServices.saveTodo(this.currentUser, todo).then(function (response) {
         _this.todos.splice(0);
         _this.fetchTodo(); // update the array of todos in case of success only.
         console.log(response.statusText);
@@ -11636,7 +11640,7 @@ exports.default = {
       var _this2 = this;
 
       if (!this.todoid) {
-        TodoRestServices.requestTodo().then(function (response) {
+        TodoRestServices.requestTodo(this.currentUser).then(function (response) {
           /**
            * @function map((todo) => push())
            * @desc Map each Todo Item fetched from the document to the corresponding Local version.
@@ -11646,12 +11650,13 @@ exports.default = {
               "_id": todo._id,
               "title": todo.title,
               "description": todo.description,
-              "completed": todo.completed
+              "completed": todo.completed,
+              "user": todo.user
             });
           });
         }); // Fetch all todos 
       }
-      var specificTodo = TodoRestServices.requestTodo(this.todoid);
+      var specificTodo = TodoRestServices.requestTodo(this.currentUser, this.todoid);
     },
     /**
      * @function removeTodo(todo)
@@ -11661,7 +11666,7 @@ exports.default = {
     removeTodo: function removeTodo(todo) {
       var _this3 = this;
 
-      TodoRestServices.deleteTodo(todo._id).then(function (response) {
+      TodoRestServices.deleteTodo(this.currentUser, todo._id).then(function (response) {
         /** 
          * @function splite(indexOf(todo), number)
          * @desc Delete the local Todo item if the remote document Todo has been successfully removed. */
@@ -11678,7 +11683,7 @@ exports.default = {
      * @param {object} todo - the todo item to be updated.
      */
     updateTodo: function updateTodo(todo) {
-      TodoRestServices.updateTodo(todo).then(function (response) {
+      TodoRestServices.updateTodo(this.currentUser, todo).then(function (response) {
         console.log(response.statusText);
       }).catch(function (error) {
         window.alert('An error occured while updating the todo');
@@ -11711,7 +11716,12 @@ exports.default = {
     }
   },
   mounted: function mounted() {
-    this.fetchTodo();
+    var _this4 = this;
+
+    TodoRestServices.getCurrentUser().then(function (response) {
+      _this4.currentUser = response.data.user;
+      _this4.fetchTodo();
+    });
   }
 };
 
@@ -11777,11 +11787,11 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 /**
  * Setting the default Parameters for Axios
  */
-_axios2.default.defaults.baseURL = 'http://localhost:3000/api'; /**
-                                                                 * @fileOverview Various Todo services for the Todo API.
-                                                                 * @author Serge R. Kamel
-                                                                 * @version 0.0.1
-                                                                 */
+_axios2.default.defaults.baseURL = 'http://localhost:3000'; /**
+                                                             * @fileOverview Various Todo services for the Todo API.
+                                                             * @author Serge R. Kamel
+                                                             * @version 0.0.1
+                                                             */
 
 _axios2.default.defaults.timeout = 10000;
 _axios2.default.defaults.headers.post['Content-Type'], _axios2.default.defaults.headers.put['Content-Type'] = "application/x-www-form-urlencoded";
@@ -11802,14 +11812,14 @@ var RestServices = function () {
          * Fetch all Todos or a specific Todo by passing a Todo ID.
          * @param {string} [todoid] - a unique identifier for todos.
          */
-        value: function requestTodo(todoid) {
-            if (!todoid) {
-                return _axios2.default.get('todo') // fetch all Todos.
+        value: function requestTodo(user, todoid) {
+            if (!todoid && user) {
+                return _axios2.default.get(_path2.default.join('api/todo', user.toString())) // fetch all Todos.
                 .catch(function (error) {
                     console.log(error);
                 });
-            } else if (todoid) {
-                return _axios2.default.get(_path2.default.join('todo', todoid.toString())) // get a specific todo.
+            } else if (todoid && user) {
+                return _axios2.default.get(_path2.default.join('api/todo', user.toString(), '/', todoid.toString())) // get a specific todo.
                 .catch(function (error) {
                     console.log(error);
                 });
@@ -11823,12 +11833,12 @@ var RestServices = function () {
 
     }, {
         key: 'saveTodo',
-        value: function saveTodo(todo) {
-            if (!todo) {
+        value: function saveTodo(user, todo) {
+            if (!todo || !user) {
                 return;
             }
             var data = _querystring2.default.stringify(todo);
-            return _axios2.default.post('todo', data).catch(function (error) {
+            return _axios2.default.post(_path2.default.join('api/todo', user.toString()), data).catch(function (error) {
                 console.log(error);
             });
         }
@@ -11839,12 +11849,12 @@ var RestServices = function () {
 
     }, {
         key: 'updateTodo',
-        value: function updateTodo(todo) {
+        value: function updateTodo(user, todo) {
             if (!todo) {
                 return;
             }
             var data = _querystring2.default.stringify(todo);
-            return _axios2.default.put(_path2.default.join('todo', todo._id.toString()), data).catch(function (error) {
+            return _axios2.default.put(_path2.default.join('api/todo', user.toString(), '/', todo._id.toString()), data).catch(function (error) {
                 console.log(error);
             });
         }
@@ -11855,11 +11865,18 @@ var RestServices = function () {
 
     }, {
         key: 'deleteTodo',
-        value: function deleteTodo(todoid) {
+        value: function deleteTodo(user, todoid) {
             if (!todoid) {
                 return;
             }
-            return _axios2.default.delete(_path2.default.join('todo', todoid)).catch(function (error) {
+            return _axios2.default.delete(_path2.default.join('api/todo', user.toString(), '/', todoid.toString())).catch(function (error) {
+                console.log(error);
+            });
+        }
+    }, {
+        key: 'getCurrentUser',
+        value: function getCurrentUser() {
+            return _axios2.default.get('user').catch(function (error) {
                 console.log(error);
             });
         }

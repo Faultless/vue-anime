@@ -4,10 +4,10 @@ var model = require('../models/todo');
 // allows us to define routes on the todo level specifically.
 var todo = express.Router();
 
-todo.route('/')
+todo.route('/:user')
     // List all todos
     .get((req, res) => {
-        model.find((err, todos) => {
+        model.find({ 'user': req.params.user }, (err, todos) => {
             if(err)
                 res.send(err);
             res.json(todos);
@@ -19,7 +19,8 @@ todo.route('/')
         var newtodo = new model({
             title: req.body.title,
             description: req.body.description,
-            completed: req.body.completed
+            completed: req.body.completed,
+            user: req.body.user
         });
 
         newtodo.save((err) => {
@@ -29,10 +30,10 @@ todo.route('/')
         });
     });
 
-todo.route('/:todoId')
+todo.route('/:user/:todoId')
     // get a specific todo based on ID
     .get((req, res) => {
-        model.findById(req.params.todoId, (err, todo) => {
+        model.find({ '_id': req.params.todoId, 'user': req.params.user }, (err, todo) => {
             if(err)
                 res.send(err);
             res.json(todo);

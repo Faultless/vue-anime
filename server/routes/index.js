@@ -10,8 +10,17 @@ var router = express.Router();
  */
 router.use('/api', api);
 
-router.get('/', function (req, res) {
+router.get('/', function (req, res) {  
     res.render('index', { user : req.user });
+});
+
+/**
+ * a helper to get the currently logged user via our Vue Application.
+ */
+router.get('/user', function(req, res) {
+    if(req.user){
+        res.send({ user: req.user.username });
+    }
 });
 
 router.get('/register', function(req, res) {

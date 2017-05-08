@@ -53,9 +53,13 @@ Checkout the [Docs](docs) for a quick overview of the important methods in use a
 
 ## Improvements and Fixes Checklist
 
-- [ ] Testing Modules for the API.
-- [ ] Editing of Todos.
 - [x] Generate Documentation using [JSDocs](http://usejsdoc.org/).
+- [X] Add Authentication mechanism.
+- [ ] Testing Modules for the API.
+- [ ] Full Editing of Todos.
+- [ ] Responsive Design.
+- [ ] Code Clean-up.
+- [ ] 
 
 ## Author
 
