@@ -59,7 +59,7 @@ Checkout the [Docs](docs) for a quick overview of the important methods in use a
 - [ ] Full Editing of Todos.
 - [ ] Responsive Design.
 - [ ] Code Clean-up.
-- [ ] 
+- [ ] Separate Prod and Dev bundling (webpack).
 
 ## Author
 
