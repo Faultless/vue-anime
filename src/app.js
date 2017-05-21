@@ -5,6 +5,11 @@ import './styles/styles.css';
 import './styles/styles.scss';
 
 new Vue({
-    el: '.todo',
-    components: { App }
+    el: '.vue-anime',
+    components: { 
+        App,
+        SearchBar: Child,
+        ResultCard: Child,
+        NotificationArea: Child
+    }
 })

@@ -1,13 +1,13 @@
 # Todo Challenge
 
-A simple Todo application built mainly with [Vue](https://vuejs.org) for the frontend, [mongoose](http://mongoosejs.com/) for the Database, and Node's [Express](https://expressjs.com/) framework for the server-side code and API. 
+A torrenting web application built mainly with [Vue](https://vuejs.org) for the frontend, [mongoose](http://mongoosejs.com/) for the Database, and Node's [Express](https://expressjs.com/) framework for the server-side code and API. 
 
 ## Getting Started
 
 To **install** this simply run 
 
 ```
-git clone https://github.com/Faultless/todo-challenge.git
+git clone https://github.com/Faultless/vue-anime.git
 ```
 
 to get a copy of the repository locally.
@@ -53,10 +53,10 @@ Checkout the [Docs](docs) for a quick overview of the important methods in use a
 
 ## Improvements and Fixes Checklist
 
-- [x] Generate Documentation using [JSDocs](http://usejsdoc.org/).
-- [X] Add Authentication mechanism.
+- [ ] Generate Documentation using [JSDocs](http://usejsdoc.org/).
+- [ ] Add Authentication mechanism.
+- [ ] Anime/videos API building.
 - [ ] Testing Modules for the API.
-- [ ] Full Editing of Todos.
 - [ ] Responsive Design.
 - [ ] Code Clean-up.
 - [ ] Separate Prod and Dev bundling (webpack).
@@ -71,5 +71,4 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ## Acknowledgments
 
-* This challenge was provided by **Georges Haddad**.
 * Inspired by Vue's TodoMVC example. 
